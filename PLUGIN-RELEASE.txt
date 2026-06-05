@@ -1,0 +1,187 @@
+# Teya — установка плагина (фаза 1)
+
+Версия: см. `.cursor-plugin/plugin.json`
+
+## 1. Установка
+
+Скопируй или symlink папку `teya/` в:
+
+```text
+%USERPROFILE%\.cursor\plugins\local\teya
+```
+
+PowerShell (symlink, от админа):
+
+```powershell
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.cursor\plugins\local\teya" -Target "C:\Users\mrrut\Desktop\Teya\teya"
+```
+
+## 2. Зависимости субагентов
+
+### Ядрышko (Core)
+
+- MCP **user-mcp-kv** с Wordstat (`wordstat_get_top_requests`)
+- Python 3 для скриптов отчётов
+- Skill: `teya/skills/yadryshko-semantic-core/SKILL.md`
+- Vendor reference: `teya/vendor/yadryshko/`
+
+### AURA
+
+- MCP **user-mcp-kv**: `gpt-image-2`, `recraft_remove_background` (для ассетов)
+- Skill: `teya/skills/aura-designer/SKILL.md`
+- Вспомогательные skills: `aura-cyrillic-google-fonts`, `aura-shape-replication`
+- Visual assets policy: `teya/shared/visual-assets-mcp-policy.md`
+- Reference visual fidelity gate: `teya/shared/reference-visual-fidelity-gate.md`
+- Visual inventory: `AURA_VISUAL_INVENTORY.json` обязателен; один hero image не проходит, если source содержит image cards/form-side visuals/callouts
+- Section transitions: `AURA_SECTION_TRANSITIONS.json` обязателен для wave/blob/mask/overlap/diagonal/cutout стыков блоков
+- Vendor reference: `teya/vendor/aura/`
+
+### Aurora Team + Aurora
+
+- FTP/SFTP/SSH/WP/SMTP/analytics доступы → `teya-memory/teya.env.local`
+- Шаблон: `teya-memory/teya.env.example` или `teya/shared/teya.env.example`
+- Data-flow contract: `teya/shared/agent-data-flow-contract.md`
+- Paint QA gate: `teya/shared/visual-paint-qa-gate.md`
+- Source decomposition gate: `teya/shared/design-source-decomposition-gate.md`
+- AURA must create source decomposition, per-page visual budget, per-page section blueprints and style scorecard before Aurora
+- Aurora reports must carry visual/status identity fields: `visual_inventory_status`, `required_visual_zones_count`, `ready_visual_zones_count`, `meaningful_image_count`, `minimum_meaningful_image_assets_homepage`, `meaningful_image_gap`, `section_transitions_status`, `asset_registry_status`, `paint_evidence_status`, `theme_slug`, `project/site_name`, `public_site_url`
+- Aurora reports must also carry `visual_budget_status`, `section_blueprints_status`, `style_match_scorecard_status`, `per_page_visual_budget_status`, `per_page_section_blueprints_status`, `per_page_meaningful_image_counts`, `per_page_visual_gaps`, `local_asset_files_status`, `missing_local_asset_files`, `browser_subresources_status`, `unstyled_live_paint_status`
+- Design Guardian must create browser screenshots/computed-style evidence in `teya-memory/wp/paint-qa/` for homepage and every selected/build page; QA blocks `✅` without it, without real screenshot files, without browser CSS/JS/images subresources, or if live paint is unstyled/default HTML
+- Required visual assets must exist locally in `teya-memory/wp/theme/<theme-slug>/`; live/remote URL alone is not a production artifact
+- After deploy Aurora must import images into WordPress Media Library with alt; public HTML must use `/wp-content/uploads/`, not MCP/tempfile URLs (`wp-media-upload-contract.md`)
+- QA blocks stale reports when theme slug/project/public URL do not match current deploy
+
+## 3. Общая память
+
+В корне проекта: `teya-memory/` (уже в репозитории Teya как шаблон).
+
+Первый контакт с пользователем:
+
+```text
+/teya-start
+```
+
+Перед E2E запуском заполни intake-файл:
+
+```text
+teya-memory/site.inv
+```
+
+Шаблон:
+
+```text
+teya-memory/site.inv.example
+teya/shared/site.inv.example
+```
+
+Секреты и доступы:
+
+```text
+teya-memory/teya.env.local
+```
+
+Шаблон:
+
+```text
+teya-memory/teya.env.example
+teya/shared/teya.env.example
+```
+
+Проверка:
+
+```powershell
+python teya/scripts/validate_teya_inv.py --path teya-memory/site.inv
+python teya/scripts/validate_teya_env.py --path teya-memory/teya.env.local
+```
+
+## 4. Фаза 1 — пайплайн
+
+```text
+Brief → teya-researcher → research gate → [core/Ядрышко ║ aura-designer] → aurora-team-lead → [content ║ navigation ║ schema ║ indexing ║ local-entity ║ performance-a11y ║ conversion ║ security-release] → content gate → aurora → content-completeness gate → aurora-team-design-guardian → aurora-team-qa
+```
+
+Команды:
+
+- `/teya-start` — объяснить пользователю, что заполнить
+- `/teya-phase1` — запустить E2E pipeline
+
+Основное имя Ядрышка в Cursor: `core`.
+Alias в Teya: `yadryshko`.
+
+Перед WP-сборкой Директор проверяет gate-файлы:
+
+- `teya-memory/research/site-research-dossier.md`
+- `teya-memory/research/competitors.csv`
+- `teya-memory/research/offers-map.md`
+- `teya-memory/research/audience-map.md`
+- `teya-memory/research/fact-bank.md`
+- `teya-memory/semantic-core/<run>/06-url-map.csv`
+- `teya-memory/semantic-core/<run>/07-content-briefs.md`
+- `teya-memory/semantic-core/<run>/11-blog-topics.md`
+- `teya-memory/design/AURADESIGN.md`
+- `teya-memory/design/AURA_PAGE_PLAN.md`
+- `teya-memory/design/AURA_VISUAL_DIFF.md`
+- `teya-memory/design/AURA_REVIEWER_PASS.md`
+- `teya-memory/design/AURA_VISUAL_QA.md`
+- `teya-memory/design/AURA_LINT_REPORT.md`
+- `teya-memory/design/AURA_BLOG_COVER_CONCEPT.md`
+- `teya-memory/design/AURA_BLOG_COVER_CONCEPT.json`
+- `teya-memory/design/AURA_BLOG_COVER_SYSTEM.md`
+- `teya-memory/design/AURA_BLOG_COVER_PROMPTS.json`
+- `teya-memory/wp/aurora-team-blueprint.md`
+- `teya-memory/wp/page-content-pack.md`
+- `teya-memory/wp/navigation-linking-map.md`
+- `teya-memory/wp/schema-technical-seo-map.md`
+- `teya-memory/wp/indexing-crawl-map.md`
+- `teya-memory/wp/local-entity-map.md`
+- `teya-memory/wp/performance-accessibility-map.md`
+- `teya-memory/wp/conversion-tracking-map.md`
+- `teya-memory/wp/security-release-map.md`
+
+После Aurora Директор проверяет дизайн-gate:
+
+- `teya-memory/wp/content-completeness-report.md`
+- `teya-memory/wp/design-integrity-report.md`
+- `teya-memory/fragments/aurora-team-design-guardian.md`
+- нет `❌ CONTENT BLOCKER`
+- статус `✅ DESIGN OK`
+
+Aurora дополнительно читает:
+
+- `teya/shared/wp-theme-builder-playbook.md`
+- `teya/shared/quality-anti-haltura.md`
+- `teya-memory/site.inv`
+- `teya-memory/research/site-research-dossier.md`
+- `teya-memory/research/fact-bank.md`
+
+Anti-haltura blockers:
+
+- отсутствует pre-start research dossier / fact bank;
+- сайт использует неподтверждённые факты вне `fact-bank.md`;
+- тонкие страницы и отсутствующие блоки;
+- публичные placeholders и “пример отзыва”;
+- фейковые отзывы/рейтинги/кейсы;
+- обрезанный hero/mobile breakage;
+- видимые top breadcrumbs, которые перекрывают меню/hero/CTA;
+- отсутствие `/blog/`, blog section на главной или `single.php`;
+- отсутствие “Политика конфиденциальности”, “Политика cookies” или cookie banner с кнопкой принятия;
+- sitemap non-200, wrong robots Host/Sitemap, staging domain leakage.
+
+Важно: `aurora-team-lead` и `aurora` не запускают вложенные subagents. Все Task запускает только Директор.
+
+## 4.1 Фаза 2 — Excalibur (блог)
+
+- Agent: `excalibur` + skills `excalibur`, `excalibur-research`, `excalibur-geo-qa`, `excalibur-wp-publish` (2b)
+- Scripts: `excalibur_link_verify.py`, `teya_excalibur_wp_publish.py`, `teya_excalibur_fact_checker.py`, `teya_excalibur_interlinker.py`, `teya_excalibur_llms_generator.py`
+- Command: `commands/teya-phase2-excalibur.md`
+- Command 2b: `commands/teya-phase2-excalibur-publish.md`
+- Contracts: `excalibur-article-writing-contract.md`, `excalibur-wp-publish-contract.md`, `blog-cover-mcp-contract.md`
+
+## 5. Reload
+
+Перезапусти Cursor или `Developer: Reload Window`.
+
+## Ссылки
+
+- Ядрышko: https://github.com/Horosheff/yadryshko-semantic-core-subagent
+- AURA: https://github.com/Horosheff/aura-designer

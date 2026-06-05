@@ -1,0 +1,41 @@
+# Runtime memory and project outputs
+teya-memory/
+memory/
+dist/
+build/
+tmp/
+temp/
+logs/
+*.log
+
+# Secrets and local credentials
+.env
+.env.*
+*.local
+*.credentials
+*.credentials.*
+hosting-credentials.local
+hosting.credentials.local
+smtp.credentials.local
+google-sheets.config.local.json
+credentials.json
+service-account*.json
+id_rsa
+id_ed25519
+*.pem
+*.key
+*.p12
+
+# Python/editor noise
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

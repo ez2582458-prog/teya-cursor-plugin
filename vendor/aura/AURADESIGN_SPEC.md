@@ -1,0 +1,379 @@
+# AuraDesign Contract: Спецификация Формата и Стандарты Интеграции
+
+**AuraDesign Contract (`AURADESIGN.md`)** — это открытый формат спецификации дизайн-системы, разработанный специально для интеллектуального взаимодействия ИИ-агентов верстки и человека-дизайнера.
+
+Формат объединяет **машиночитаемые токены** (YAML Front Matter) с **высокоуровневой логикой и ограничениями** (Markdown Prose Body). Это даёт ИИ-кодеру полную, структурированную картину бренда без «догадок» и хаотичных ручных правок.
+
+---
+
+## 1. Двухслойная архитектура контракта
+
+Файл `AURADESIGN.md` всегда состоит из двух слоёв, разделенных забором из дефисов (`---`):
+
+1. **Слой токенов (YAML Front Matter):** Точные, жесткие числовые значения (HEX-коды, пиксели, ремы, начертания) для автоматического парсинга, экспорта в CSS/Tailwind и построения структуры.
+2. **Слой логики (Markdown Prose Body):** Описание философии бренда, правил композиции, сетки, адаптивности, физики света/размытий, интерактивных переходов и жестких запретов (Do's and Don'ts).
+
+```md
+---
+# 1. Машиночитаемые токены
+name: Aura SaaS Minimal
+colors:
+  primary: "#2563EB"
+...
+---
+
+# 2. Описание логики и правил
+## Philosophy & Vibe
+...
+```
+
+---
+
+## 2. Спецификация YAML токенов (Слой 1)
+
+Токены делятся на канонические группы. Любые другие произвольные ключи игнорируются или парсятся как расширения.
+
+### 2.1 Colors (Палитра и Роли)
+
+Использует исключительно семантические названия ролей вместо физических названий (например, `primary` вместо `blue`). Каждая роль должна иметь конкретное назначение.
+
+```yaml
+colors:
+  # Основные акценты
+  primary: "#1e1b4b"               # Главный цвет бренда и призыва к действию (CTA)
+  primary-hover: "#312e81"         # Цвет кнопки при наведении курсора
+  on-primary: "#ffffff"            # Цвет текста/иконок поверх primary
+  
+  # Второстепенные акценты
+  secondary: "#4f46e5"             # Дополнительные элементы, активная навигация
+  on-secondary: "#ffffff"          
+  
+  # Поверхности и Контейнеры (Material Architecture)
+  background: "#f8fafc"            # Общий фон страницы
+  on-background: "#0f172a"         # Текст на общем фоне
+  
+  # Контейнеры по уровням высоты (от низкого к высокому)
+  surface-lowest: "#ffffff"        # Самый нижний уровень (например, фон белых карточек)
+  surface-low: "#f1f5f9"           # Тональный фон под-элементов
+  surface-container: "#e2e8f0"     # Базовый контейнер средних элементов
+  surface-high: "#cbd5e1"          # Выделенные панели
+  
+  # Детали и Границы
+  outline: "#94a3b8"               # Границы интерактивных полей ввода
+  outline-variant: "#e2e8f0"       # Тонкие разделители карточек/списков
+  
+  # Сигнальные и Ошибки
+  error: "#dc2626"                 # Ошибки, предупреждения, деструктивные кнопки
+  on-error: "#ffffff"
+```
+
+### 2.2 Typography (Шрифтовой Ритм)
+
+Каждая шрифтовая роль описывается как объект со свойствами `fontFamily`, `fontSize`, `fontWeight`, `lineHeight` и опциональным `letterSpacing`.
+
+```yaml
+typography:
+  display-lg:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: "48px"
+    fontWeight: "800"
+    lineHeight: "1.15"
+    letterSpacing: "-0.02em"
+  headline-md:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: "24px"
+    fontWeight: "700"
+    lineHeight: "1.3"
+  body-md:
+    fontFamily: "Inter"
+    fontSize: "16px"
+    fontWeight: "400"
+    lineHeight: "1.6"
+  label-sm:
+    fontFamily: "Inter"
+    fontSize: "12px"
+    fontWeight: "600"
+    lineHeight: "1.2"
+    letterSpacing: "0.05em"
+```
+
+### 2.3 Rounded (Скругления)
+
+Шкала скруглений углов интерфейса. Ключи соответствуют стандартному шагу.
+
+```yaml
+rounded:
+  sm: "4px"
+  DEFAULT: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "24px"
+  full: "9999px"
+```
+
+### 2.4 Spacing (Сетки и Отступы)
+
+Задаёт единый ритм пустых пространств на странице и раскладки контейнеров.
+
+```yaml
+spacing:
+  base: "8px"                      # Базовый модуль сетки
+  xs: "4px"
+  sm: "12px"
+  md: "24px"
+  lg: "40px"
+  xl: "64px"
+  gutter: "16px"                   # Промежуток между колонками
+  margin: "24px"                   # Внешние безопасные поля экрана
+```
+
+### 2.5 Components (Спецификации элементов)
+
+Позволяет привязать конкретные элементы к токенам через систему ссылок в фигурных скобках `{colors.primary}`.
+
+```yaml
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    rounded: "{rounded.md}"
+    typography: "{typography.label-sm}"
+    padding: "{spacing.sm} {spacing.md}"
+    height: "44px"
+  card-interactive:
+    backgroundColor: "{colors.surface-lowest}"
+    borderColor: "{colors.outline-variant}"
+    rounded: "{rounded.xl}"
+    padding: "{spacing.md}"
+  input-field:
+    backgroundColor: "{colors.surface-low}"
+    borderColor: "{colors.outline}"
+    rounded: "{rounded.DEFAULT}"
+    padding: "{spacing.sm}"
+```
+
+---
+
+## 3. Спецификация Markdown Разделов (Слой 2)
+
+Markdown-раздел объясняет **дизайнерские решения** и поведение адаптивности, которые невозможно описать сухими цифрами YAML. Обязательна разбивка на следующие секции:
+
+### `## Source Replication Doctrine`
+
+Главный раздел для режима точного копирования источника. Если пользователь дал ссылку, скриншот или изображение, агент обязан сначала повторить источник, а не улучшать его.
+
+Обязательные правила:
+
+- источник является законом;
+- если изображение находится в центре, оно остается в центре;
+- если крупный заголовок расположен за изображением, заголовок остается за изображением;
+- порядок слоев, масштаб, пропорции, отступы, фоновые формы, сетка и визуальный ритм копируются до любых улучшений;
+- изменения темы, картинки, палитры и композиции разрешены только после явного запроса пользователя.
+
+### `## Composition Lock`
+
+Фиксирует конкретные композиционные наблюдения: позицию hero-изображения, расположение заголовка, z-index слоев, направление motion, плотность сетки, CTA-позиции, фоновые паттерны и порядок секций. Этот раздел нужен, чтобы другой агент мог воспроизвести layout copy-in-copy.
+
+### `## Philosophy & Vibe`
+
+Описывает характер бренда. Запрещено использовать бессмысленные слова («красивый», «современный», «премиальный») без расшифровки.
+
+- *Плохо:* «Сделайте дизайн премиальным и стильным».
+- *Хорошо:* «Бренд несёт в себе эстетику сдержанного скандинавского минимализма. Обилие белого пространства (воздуха), полное отсутствие цветных плашек, тонкие границы карточек заменяют тени. Эмоция: спокойствие, фокус, чистота».
+
+### `## Color Guidance`
+
+Чёткий регламент применения каждого цвета. Указывает, где цвета обязаны быть, а где категорически запрещены.
+
+- Например: «Цвет `primary` зарезервирован исключительно для главного CTA и интерактивных ссылок. Запрещено окрашивать им второстепенный текст, фоны блоков или декоративные иконки».
+
+### `## Layout & Grid`
+
+Описывает структуру страниц и принципы адаптивности.
+
+- Указывает максимальную ширину контента (max-width), поведение шапки (sticky или scroll) и правила перестроения карточек на мобильных экранах (375px).
+
+### `## Elevation & Depth`
+
+Описывает вертикальную ось интерфейса. Наличие теней, их глубина, степень прозрачности (alpha-каналы) и физика размытий (backdrop-blur) для модальных слоёв.
+
+### `## Component States & Behaviors`
+
+Правила интерактивности:
+
+- **Hover-состояния:** Какое изменение происходит при наведении (смещение, смена фона, мягкое увеличение).
+- **Focus-состояния:** Наличие обязательной контрастной рамки (outline) для доступности клавиатуры.
+- **Disabled-состояния:** Поведение заблокированных элементов (снижение opacity до 40%, отключение курсора pointer-events-none).
+
+### `## Do's and Don'ts`
+
+Прямой и жесткий свод законов для ИИ-агента, исключающий галлюцинации и креативный произвол.
+
+```md
+- Do сохраняйте контрастность шрифтов не ниже WCAG AA (4.5:1).
+- Do делайте все внешние отступы блоков кратными базовому шагу `spacing.base`.
+- Don't смешивайте острые и круглые углы в одной секции.
+- Don't используйте тени для карточек, если включена светлая тема.
+```
+
+---
+
+## 3.1 Обязательные Deliverables
+
+При полном прогоне Aura Designer должен создать не только HTML и `AURADESIGN.md`, но и аналитические файлы:
+
+1. `AURA_REPLICATION_TODO.md` — todo-карта точного повторения источника.
+2. `AURA_SOURCE_ANALYSIS.md` — разбор композиции, hero, слоев, ассетов, сетки, фонов и motion.
+3. `AURA_SOURCE_DECOMPOSITION.json` — разбор источника по секциям, фонам, объектам, карточкам, transitions, must-match and must-not.
+4. `AURA_VISUAL_BUDGET.json` — минимальная визуальная плотность: colored sections, meaningful images, motifs, overlaps, custom cards, non-rectangular transitions.
+5. `AURA_SECTION_BLUEPRINTS.json` — implementation checklist по каждой ключевой секции.
+6. `AURA_STYLE_MATCH_SCORECARD.md` — minimum/planned score по color identity, visual density, composition, assets, typography, transitions.
+7. `AURA_VISUAL_INVENTORY.json` — карта всех visual zones источника: hero, image cards, form-side images, stickers, callouts, thumbnails, mockups.
+8. `AURA_SECTION_TRANSITIONS.json` — карта нестандартных переходов между секциями: wave, diagonal, mask, blob overlap, cutout overlap, gradient fade, custom SVG.
+9. `AURA_BRAND_KIT_IMAGE_PROMPT.md` — prompt для генерации одной большой brand-kit картинки через MCP `gpt-image-2`.
+10. `AURA_COLOR_PSYCHOLOGY.md` — анализ психологии цвета и рекомендации, которые нельзя применять без разрешения пользователя.
+
+Brand-kit картинка должна быть одним большим изображением с несколькими визуальными «слайдами»: палитра, типографика, фоны, кнопки, карточки, формы, сетка, hero breakdown, ассеты, mobile preview и accessibility пары.
+
+---
+
+## 4. Контроль Качества и Валидация (Linter)
+
+Для обеспечения идеальной совместимости с ИИ, AuraDesign-контракты проверяются автоматическим валидатором по следующим критериям:
+
+1. **Синтаксис YAML:** Соответствие базовой схеме токенов.
+2. **Замкнутость ссылок:** Все ссылки вида `{path.to.token}` обязаны вести на реально существующие токены в текущем файле.
+3. **Контрастность цветов:** Автоматический замер относительной яркости по стандарту WCAG 2.1. Контраст между парами `primary` / `on-primary` и `background` / `on-background` должен быть не менее **4.5:1** (для крупного текста — не менее **3:1**).
+4. **Сбалансированность углов:** Проверка, чтобы в шкале `rounded` не было экстремальных разрывов (например, кнопка 2px, а карточка 40px), нарушающих единство стиля.
+5. **Точность источника:** Проверка, что hero, слои, позиция изображения, заголовок, сетка и порядок блоков соответствуют источнику, если он был задан.
+6. **Наличие deliverables:** Проверка, что созданы todo, source analysis, source decomposition, visual budget, section blueprints, style scorecard, visual inventory, section transitions map, brand-kit prompt и color psychology analysis.
+
+---
+
+## 5. Интеграция Ассетов и Безфоновых Изображений
+
+Важнейший стандарт AuraDesign — **разделение контента и фона**.
+Когда сайт требует размещения иллюстраций (персонажей, 3D-фигур, элементов интерфейса в Hero-блоках), система AuraDesign использует автоматическое удаление фона:
+
+1. Генерируется целевое высокохудожественное изображение с нужным объектом строго через MCP KV `user-mcp-kv/gpt-image-2`.
+2. Если объект должен быть без фона, результат обязательно пропускается через MCP KV `user-mcp-kv/recraft_remove_background`, превращаясь в прозрачный PNG.
+3. URL исходной генерации и URL прозрачного PNG фиксируются в `AURA_ASSET_REGISTRY.json` как `url` и `transparent_url`; для упаковки в тему используй `packaged_url = transparent_url`.
+4. PNG вставляется поверх фоновых градиентов или узоров блока, описанных в CSS. Это позволяет анимировать объект независимо от фона, масштабировать его под любые экраны и избегать неряшливых стыков или жестких границ картинок.
+
+Перед генерацией ассетов агент обязан составить `AURA_VISUAL_INVENTORY.json`. Если источник содержит image-bearing cards, form-side person/object, thumbnails или mockups, эти зоны нельзя заменить plain text cards. Один hero image не покрывает весь визуальный язык такого референса. `minimum_meaningful_image_assets_homepage` и per-page `minimum_meaningful_image_assets` должны считать реальные image/illustration/cutout scenes; CSS cards, gradients and decorative blobs do not count. Разные появления персонажа/объекта в hero, overlap-card, services, how-it-works и footer считаются отдельными visual instances, если у них разные композиционные роли. Для каждой selected/build page нужен visual budget и section blueprints; внутренние страницы не могут быть generic/default text templates.
+
+Запрещено:
+
+- создавать новые изображения через Python, Pillow, Canvas crop, chroma key, CSS-заглушки, stock/fallback URL;
+- писать в отчете «ассет создан», пока нет реального URL из `gpt-image-2`;
+- писать в отчете «фон удален», пока нет реального URL из `recraft_remove_background`;
+- продолжать сборку страницы с битым или отсутствующим `<img src>`.
+- оставлять видимый обрыв hero-person/object PNG на фоне. Если низ ассета обрезан, он должен уходить под следующий блок через `overflow-y-visible` у hero, `translate-y-*` у ассета, отрицательный margin и более высокий z-index у следующей секции.
+
+---
+
+## 6. Правила Подбора Шрифтов Aura (Font Selection Rules)
+
+Шрифты в AuraDesign являются мощнейшим инструментом позиционирования бренда. Для русскоязычных и потенциально русскоязычных страниц шрифтовые пары подбираются только из гарнитур Google Fonts с поддержкой кириллицы. Подробный проектный скилл: `.cursor/skills/aura-cyrillic-google-fonts/SKILL.md`.
+
+### 6.1 Обязательные Кириллические Требования
+
+1. **Cyrillic first:** если интерфейс может содержать русский текст, оба шрифта пары должны поддерживать кириллицу. Красивый латинский display-шрифт без кириллицы допустим только для неизменяемого латинского логотипа.
+2. **Большой каталог вместо 5 пресетов:** агент обязан держать много вариантов под разные настроения: SaaS, creator, editorial, brutal, tech, luxury, organic, retro, culture.
+3. **Безопасные базовые кириллические семейства:** `Manrope`, `Onest`, `Golos Text`, `Geologica`, `Jost`, `Montserrat`, `Montserrat Alternates`, `Nunito Sans`, `Rubik`, `IBM Plex Sans`, `Source Sans 3`, `Roboto`, `PT Sans`, `PT Serif`, `Cormorant Garamond`, `Lora`, `Merriweather`, `Unbounded`, `Russo One`, `Rubik Mono One`, `Oswald`, `Comfortaa`, `Fira Sans`, `JetBrains Mono`, `IBM Plex Mono`, `Roboto Mono`.
+4. **Запрещены как Google Fonts для кириллического текста:** `Satoshi`, `Neue Montreal`, `Helvetica Neue`, `Avenir`, `Clash Display`. Их нет в Google Fonts или кириллица не гарантирована.
+5. **Проверять спорные гарнитуры:** `Space Grotesk`, `Syne`, `Outfit`, `Plus Jakarta Sans` нельзя использовать для русского текста без явной проверки кириллицы; безопасные замены: `Manrope`, `Onest`, `Golos Text`, `Jost`, `Geologica`, `Unbounded`.
+
+### 6.2 Примеры Кириллических Пар
+
+- SaaS/Product: `Manrope` + `Inter`, `Onest` + `Manrope`, `Wix Madefor Display` + `Wix Madefor Text`, `Golos Text` + `Golos Text`.
+- Creator/Portfolio: `Nunito Sans` + `Nunito Sans`, `Comfortaa` + `Nunito Sans`, `Rubik` + `Nunito Sans`, `Jost` + `Manrope`.
+- Editorial/Premium: `Cormorant Garamond` + `Manrope`, `Lora` + `Source Sans 3`, `Merriweather` + `Open Sans`, `PT Serif` + `PT Sans`.
+- Brutal/Poster: `Unbounded` + `Manrope`, `Unbounded` + `Golos Text`, `Russo One` + `Roboto`, `Rubik Mono One` + `Rubik`, `Oswald` + `Source Sans 3`.
+- Tech/AI/Fintech: `IBM Plex Mono` + `IBM Plex Sans`, `JetBrains Mono` + `Manrope`, `Roboto Mono` + `Roboto`, `Exo 2` + `Open Sans`, `Geologica` + `Golos Text`.
+- Luxury/Beauty: `Cormorant Garamond` + `Manrope`, `Poiret One` + `Montserrat`, `Tenor Sans` + `Open Sans`, `Prata` + `Roboto`, `Forum` + `PT Sans`.
+- Organic/Pets: `Nunito` + `Nunito Sans`, `Comfortaa` + `Open Sans`, `Rubik` + `Rubik`, `Pangolin` + `Nunito`, `Neucha` + `Open Sans`.
+- Retro/Culture: `Russo One` + `PT Sans`, `Oswald` + `PT Sans`, `Oranienbaum` + `PT Serif`, `Forum` + `PT Sans`.
+
+### 6.3 Ключевые Законы Типографики Aura
+
+1. **Inter не является универсальным ответом:** `Inter` допустим как body-шрифт в продуктовых интерфейсах, но не должен быть дефолтным display-шрифтом для любой ниши.
+2. **Оптическая плотность:** крупный заголовок высокой жирности (`fontWeight: 800/900`) требует отрицательного `letter-spacing: -0.02em...-0.06em`.
+3. **Lowercase typography:** строчные заголовки требуют более плотного трекинга и `line-height: 1.05-1.1`, чтобы текст работал как цельный графический блок.
+4. **Два семейства максимум:** третье семейство допускается только как маленький моноширинный технический акцент.
+
+---
+
+## 7. Правила Репликации Шейпов Aura (Shape Replication Rules)
+
+Шейпы не выбираются из заготовленного набора. Агент обязан копировать именно форму источника: если прислана клякса, делается клякса; если круги — круги; если капсулы — капсулы; если неровные органические blobs — blobs. Подробный проектный скилл: `.cursor/skills/aura-shape-replication/SKILL.md`.
+
+### 7.1 Что фиксировать перед версткой
+
+1. Тип формы: круг, овал, капсула, клякса, blob, карточка, sunburst, цветок, sparkle, волна, линия, лента, рамка.
+2. Геометрию: пропорции, радиус, симметрию/асимметрию, количество лучей/лепестков, наклон, слой.
+3. Контур: есть ли stroke, какой цвет, толщина, opacity, sharp/round joins.
+4. Тени: нет тени, мягкая ambient shadow, жесткая flat shadow, glow, blur.
+5. Технику: CSS radius для простых форм, inline SVG path для blobs/клякс/цветов/волн, CSS `clip-path`/`mask-image` для переходов секций, MCP asset для сложных иллюстраций или текстур.
+
+### 7.1.1 Section Transitions
+
+Если источник использует нестандартный стык блоков, агент обязан зафиксировать его в `AURA_SECTION_TRANSITIONS.json`.
+
+Обязательные поля:
+
+- `id`;
+- `from_section`;
+- `to_section`;
+- `type`;
+- `geometry`;
+- `layers`;
+- `implementation`;
+- `desktop`;
+- `tablet`;
+- `mobile`;
+- `source_reference`;
+- `must_replicate`.
+
+Нельзя заменять wave/blob/mask/overlap обычной прямой границей секций без явного blocker-объяснения.
+
+### 7.2 Запреты
+
+- Нельзя заменять кляксы на звезды, blobs на круги, flower на sunburst, sparkle на ромб, если источник показывает другую форму.
+- Нельзя добавлять черные обводки, если их нет в источнике.
+- Нельзя добавлять жесткие черные тени, если источник плоский или мягкий.
+- Нельзя использовать форму из прошлой задачи как декоративный стандарт.
+
+---
+
+## 8. Visual Diff Gate и Reviewer Pass
+
+Каждый серьезный copy-in-copy прогон должен создавать и использовать два дополнительных gate-файла:
+
+1. `AURA_VISUAL_DIFF.md` — side-by-side чеклист сравнения источника и результата на 1440px, 768px и 375px.
+2. `AURA_REVIEWER_PASS.md` — обязательный второй проход `aura-design-reviewer`, который проверяет не "красоту вообще", а точность источника.
+
+### 8.1 Visual Diff Gate
+
+Проверяются зоны:
+
+- Hero: позиция изображения, слои, фон, заголовок, CTA.
+- Typography: шрифтовая похожесть, вес, размер, трекинг, line-height, кириллица.
+- Shapes: кляксы, blobs, круги, капсулы, линии, stickers, SVG.
+- Section transitions: wave, diagonal, mask, overlap, hero cutout entering next section.
+- Borders/Shadows: отсутствие чужих stroke и style bleeding.
+- Spacing: поля, gap, vertical rhythm, max-width.
+- Assets: MCP URL, cutout, background removal, отсутствие broken images.
+- Mobile: отсутствие горизонтального скролла и сохранение композиционной логики.
+
+### 8.2 Reviewer Pass
+
+`aura-design-reviewer` обязан проверить:
+
+- источник не переосмыслен без запроса;
+- shape-map соблюден;
+- font-match использует кириллические пары, если это нужно;
+- нет лишних черных обводок и жестких теней;
+- visual diff не содержит критичных расхождений.
+
+

@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""Publish one Excalibur blog article to WordPress (FTP bootstrap)."""
+from __future__ import annotations
+
+import argparse
+import base64
+import ftplib
+import io
+import json
+import sys
+import urllib.request
+from pathlib import Path
+
+
+def project_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def load_env(root: Path) -> dict[str, str]:
+    for name in ("teya-memory/teya.env.local", "teya/shared/teya.env.local"):
+        p = root / name
+        if p.is_file():
+            env: dict[str, str] = {}
+            for line in p.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if "=" in line and not line.startswith("#"):
+                    k, v = line.split("=", 1)
+                    env[k.strip()] = v.strip()
+            return env
+    raise FileNotFoundError("teya.env.local not found under teya-memory/")
+
+
+def load_article(article_dir: Path) -> dict:
+    meta_path = article_dir / "article.meta.json"
+    html_path = article_dir / "article.html"
+    if not meta_path.is_file() or not html_path.is_file():
+        raise FileNotFoundError("article.meta.json and article.html required")
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    content = html_path.read_text(encoding="utf-8").strip()
+    cover_path = article_dir / "cover" / "cover.png"
+    schema_path = article_dir / "schema.jsonld"
+    cover_b64 = ""
+    if cover_path.is_file():
+        cover_b64 = base64.b64encode(cover_path.read_bytes()).decode("ascii")
+    schema_raw = ""
+    if schema_path.is_file():
+        schema_raw = schema_path.read_text(encoding="utf-8").strip()
+    cover_reg = article_dir / "cover" / "cover-registry.json"
+    cover_alt = meta.get("cover_alt") or meta.get("cover_alt_text") or ""
+    if cover_reg.is_file():
+        reg = json.loads(cover_reg.read_text(encoding="utf-8"))
+        cover_alt = cover_alt or reg.get("cover_alt_text", "")
+    return {
+        "slug": meta["slug"],
+        "title": meta.get("title") or meta.get("h1", ""),
+        "excerpt": meta.get("description", ""),
+        "content": content,
+        "cover_b64": cover_b64,
+        "cover_alt": cover_alt,
+        "schema_jsonld": schema_raw,
+        "topic_id": meta.get("topic_id", ""),
+    }
+
+
+def build_php(payload: dict) -> str:
+    b64 = base64.b64encode(json.dumps(payload, ensure_ascii=False).encode("utf-8")).decode("ascii")
+    return f"""<?php
+require __DIR__ . '/wp-load.php';
+require_once ABSPATH . 'wp-admin/includes/file.php';
+require_once ABSPATH . 'wp-admin/includes/media.php';
+require_once ABSPATH . 'wp-admin/includes/image.php';
+require_once ABSPATH . 'wp-admin/includes/post.php';
+
+$p = json_decode(base64_decode('{b64}'), true);
+$slug = $p['slug'];
+$existing = get_page_by_path($slug, OBJECT, 'post');
+if ($existing instanceof WP_Post) {{
+    $post_id = (int) $existing->ID;
+    wp_update_post([
+        'ID' => $post_id,
+        'post_title' => $p['title'],
+        'post_name' => $slug,
+        'post_content' => $p['content'],
+        'post_excerpt' => $p['excerpt'],
+        'post_status' => 'publish',
+    ]);
+}} else {{
+    $post_id = (int) wp_insert_post([
+        'post_title' => $p['title'],
+        'post_name' => $slug,
+        'post_content' => $p['content'],
+        'post_excerpt' => $p['excerpt'],
+        'post_status' => 'publish',
+        'post_type' => 'post',
+    ], true);
+}}
+if (is_wp_error($post_id)) {{
+    echo 'ERR post: ' . $post_id->get_error_message() . PHP_EOL;
+    exit(1);
+}}
+echo 'OK post=' . $post_id . ' slug=' . $slug . PHP_EOL;
+
+if (!empty($p['cover_b64'])) {{
+    $bin = base64_decode($p['cover_b64']);
+    $tmp = wp_tempnam('teya-cover-' . $slug . '.png');
+    file_put_contents($tmp, $bin);
+    $file_array = [
+        'name' => $slug . '-cover.png',
+        'tmp_name' => $tmp,
+        'type' => 'image/png',
+        'error' => 0,
+        'size' => strlen($bin),
+    ];
+    $att_id = media_handle_sideload($file_array, $post_id, null, [
+        'post_title' => $slug . ' cover',
+    ]);
+    if (is_wp_error($att_id)) {{
+        echo 'WARN cover: ' . $att_id->get_error_message() . PHP_EOL;
+    }} else {{
+        set_post_thumbnail($post_id, (int) $att_id);
+        if (!empty($p['cover_alt'])) {{
+            update_post_meta((int) $att_id, '_wp_attachment_image_alt', sanitize_text_field($p['cover_alt']));
+        }}
+        echo 'OK featured_image=' . (int) $att_id . PHP_EOL;
+    }}
+    @unlink($tmp);
+}}
+
+if (!empty($p['schema_jsonld'])) {{
+    update_post_meta($post_id, '_teya_schema_jsonld', wp_slash($p['schema_jsonld']));
+    echo 'OK schema_meta=1' . PHP_EOL;
+}}
+
+$permalink = get_permalink($post_id);
+echo 'permalink=' . $permalink . PHP_EOL;
+"""
+
+
+def publish_via_ftp(env: dict[str, str], php: str, public_base: str) -> str:
+    remote = "teya-excalibur-publish-once.php"
+    ftp = ftplib.FTP()
+    ftp.connect(env["FTP_HOST"], int(env.get("FTP_PORT", "21")), timeout=120)
+    ftp.login(env["FTP_USER"], env["FTP_PASS"])
+    ftp.set_pasv(True)
+    ftp.cwd("/")
+    ftp.storbinary(f"STOR {remote}", io.BytesIO(php.encode("utf-8")))
+    ftp.quit()
+
+    url = public_base.rstrip("/") + "/" + remote
+    opener = urllib.request.build_opener()
+    opener.addheaders = [("User-Agent", "TeyaExcaliburPublish/1.0")]
+    urllib.request.install_opener(opener)
+    out = urllib.request.urlopen(url, timeout=180).read().decode("utf-8", errors="replace")
+
+    ftp = ftplib.FTP()
+    ftp.connect(env["FTP_HOST"], int(env.get("FTP_PORT", "21")), timeout=120)
+    ftp.login(env["FTP_USER"], env["FTP_PASS"])
+    ftp.set_pasv(True)
+    try:
+        ftp.delete(remote)
+    except ftplib.error_perm:
+        pass
+    ftp.quit()
+    return out
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--article-dir", type=Path, required=True)
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--public-base", type=str, default=None, help="Override PUBLIC_SITE_URL")
+    args = ap.parse_args()
+    root = project_root()
+    article_dir = args.article_dir if args.article_dir.is_absolute() else root / args.article_dir
+    payload = load_article(article_dir)
+    php = build_php(payload)
+
+    if args.dry_run:
+        print(json.dumps({"dry_run": True, "slug": payload["slug"], "title": payload["title"]}, ensure_ascii=False, indent=2))
+        print("PHP bytes:", len(php.encode("utf-8")))
+        return 0
+
+    env = load_env(root)
+    public = args.public_base or env.get("PUBLIC_SITE_URL") or env.get("WP_HOME") or ""
+    if not public:
+        print("PUBLIC_SITE_URL or --public-base required", file=sys.stderr)
+        return 2
+    out = publish_via_ftp(env, php, public)
+    print(out)
+
+    result_path = article_dir / "wp-publish-result.json"
+    permalink = ""
+    for line in out.splitlines():
+        if line.startswith("permalink="):
+            permalink = line.split("=", 1)[1].strip()
+    result = {
+        "slug": payload["slug"],
+        "topic_id": payload["topic_id"],
+        "permalink": permalink,
+        "raw_output": out,
+        "verdict": "pass" if "OK post=" in out else "fail",
+    }
+    result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return 0 if result["verdict"] == "pass" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

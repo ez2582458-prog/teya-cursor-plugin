@@ -1,0 +1,139 @@
+# Teya site intake file.
+# Copy to <PROJECT_ROOT>/teya-memory/site.inv and fill before a full E2E run.
+# Keep real credentials only in local/private files. Do not commit secrets.
+# Main secrets file: <PROJECT_ROOT>/teya-memory/teya.env.local
+
+[project]
+site_name =
+theme_slug = teya-generated-site
+language = ru-RU
+region = Россия
+primary_goal = leads
+public_site_url =
+
+[business]
+company_name =
+short_description =
+legal_name =
+inn =
+ogrn =
+address =
+city =
+country =
+working_hours =
+
+[contacts]
+phone =
+email =
+telegram =
+whatsapp =
+vk =
+youtube =
+max =
+cta_url =
+cta_text =
+
+[design]
+reference_url =
+reference_screenshot =
+style_notes =
+visual_must_keep =
+visual_must_avoid =
+required_visual_zones =
+minimum_homepage_visual_assets =
+minimum_meaningful_image_assets_homepage =
+allow_mcp_image_generation = yes
+allow_background_removal = yes
+must_keep =
+must_avoid =
+logo_path =
+brand_colors =
+fonts =
+
+[content]
+niche =
+services =
+products =
+target_audience =
+competitors =
+exclude_topics =
+existing_content_path =
+blog_required = yes
+starter_blog_posts = 3
+
+[seo]
+wordstat_region = 225
+priority_search = yandex,google
+google_verification =
+yandex_verification =
+metrika_counter_id =
+robots_host =
+google_search_console_property =
+yandex_webmaster_site =
+allow_ai_crawlers = yes
+generate_llms_txt = yes
+old_url_map_path =
+
+[local_seo]
+yandex_business_url =
+google_business_profile_url =
+twogis_url =
+maps_embed_preference = yandex,google
+service_area =
+geo_latitude =
+geo_longitude =
+business_category =
+reviews_url =
+
+[analytics]
+ga4_measurement_id =
+gtm_container_id =
+metrika_counter_id =
+track_phone_clicks = yes
+track_email_clicks = yes
+track_messenger_clicks = yes
+track_form_submit = yes
+track_cta_clicks = yes
+
+[forms]
+lead_form_required = yes
+lead_form_fields = name,phone,email,message
+smtp_required = unknown
+smtp_credentials_file = teya-memory/smtp.credentials.local
+crm_webhook_url =
+telegram_notify_chat =
+anti_spam = honeypot,nonce
+
+[wordpress]
+wp_admin_url =
+wp_admin_user =
+wp_cli_available = unknown
+permalink_structure = /%postname%/
+existing_theme_slug =
+target_theme_slug = teya-generated-site
+
+[hosting]
+deploy_mode = local-only
+credentials_file = teya-memory/teya.env.local
+ftp_host =
+ftp_port = 21
+ftp_user =
+ftp_remote_theme_path =
+ssh_host =
+ssh_port = 22
+ssh_user =
+ssh_theme_path =
+public_theme_url =
+
+[legal]
+privacy_policy_required = yes
+cookies_policy_required = yes
+personal_data_consent_required = yes
+offer_required = no
+
+[automation]
+allow_publish = no
+allow_activate_theme = no
+allow_create_pages = yes
+allow_create_posts = yes
+allow_clear_cache = yes
