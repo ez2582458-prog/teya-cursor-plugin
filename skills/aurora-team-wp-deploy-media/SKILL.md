@@ -7,7 +7,9 @@ description: Отдельный deploy/media агент: публикация т
 
 ## Роль
 
-Этот агент разгружает Aurora от FTP/SFTP/WP media рутины. Он работает только после `AURORA PAGE BUILDER` и `aurora-team-asset-packager`.
+Этот агент разгружает Aurora от asset transport, FTP/SFTP/WP media рутины. Он работает только после `AURORA PAGE BUILDER` и `aurora-team-asset-packager`.
+
+Он является **единственным владельцем финального транспорта ассетов**: remote MCP/CDN URL → verified local theme files → FTP/SFTP upload → WordPress Media Library. Asset Packager может подготовить карту/первичные файлы, но перед сервером именно этот агент обязан заново проверить и при необходимости скачать/нормализовать ассеты.
 
 ## Inputs
 
@@ -15,6 +17,7 @@ description: Отдельный deploy/media агент: публикация т
 teya-memory/wp/theme/<theme-slug>/
 teya-memory/wp/asset-packaging-report.md
 teya-memory/wp/theme/<theme-slug>/media-map.json
+teya-memory/design/AURA_ASSET_REGISTRY.json
 teya-memory/teya.env.local
 teya-memory/site.inv
 ```
@@ -24,6 +27,10 @@ teya-memory/site.inv
 - Проверить `allow_publish`.
 - Если publish запрещён, не выдумывать URL, статус `READY TO DEPLOY`.
 - Если publish разрешён, сделать backup/snapshot по security map.
+- Перед любым FTP/SFTP upload выполнить asset transport preflight:
+  `python teya/scripts/asset_transport.py --project-root <PROJECT_ROOT> --theme-slug <theme-slug>`.
+- Asset transport обязан скачать/починить missing/invalid local assets из `AURA_ASSET_REGISTRY.json` через Range-chunk downloader, проверить byte signature, пересохранить WebP/JPEG/GIF в настоящий PNG если целевой путь `.png`, выполнить Pillow `verify()` + `load()`, обновить `media-map.json` полями `bytes`, `detected_format`, `decode_verified: true`.
+- Если `asset_transport.py` вернул ненулевой код или `asset-transport-report.md` содержит `BLOCKER`, остановиться со статусом `ASSET TRANSPORT BLOCKER`; не деплоить тему и не запускать bootstrap.
 - Задеплоить тему.
 - Для FTP сначала определить, где находится FTP root:
   - если `/` уже содержит `wp-content`, remote theme path обязан быть `/wp-content/themes/<theme-slug>`;
@@ -45,6 +52,11 @@ teya-memory/site.inv
 
 - `allow_publish != yes` при попытке live deploy;
 - missing FTP/SFTP/SSH credentials;
+- `asset_transport.py` не запускался перед deploy;
+- `asset-transport-report.md` отсутствует или содержит `BLOCKER`;
+- любой raster asset без `decode_verified: true`;
+- MCP/CDN URL существует, но полный GET/Range download не дал полного декодируемого файла;
+- `.png` target содержит bytes WebP/JPEG/GIF/HTML/unknown после transport;
 - FTP theme files uploaded into duplicated docroot (`public_html/avrora/public_html`, `public_html/public_html`, etc.);
 - normalized FTP theme path missing `style.css` or `functions.php`;
 - canonical/public URL не HTTPS;
@@ -62,6 +74,7 @@ teya-memory/site.inv
 
 ```text
 teya-memory/wp/deploy-log.md
+teya-memory/wp/asset-transport-report.md
 teya-memory/wp/wp-media-map.json
 teya-memory/wp/wp-media-import-log.md
 teya-memory/fragments/aurora-team-wp-deploy-media.md

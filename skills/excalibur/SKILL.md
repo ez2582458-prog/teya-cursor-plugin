@@ -19,9 +19,11 @@ Excalibur пишет **полноценные статьи** для блога �
 
 Excalibur **не** меняет дизайн, **не** собирает семантику, **не** деплоит WP (опционально Aurora).
 
+Excalibur — автоматический post-ready enrichment. Он запускается Директором после успешного hard release gate базового сайта. Если Excalibur не успел, получил QA/COVER blocker или не смог подготовить статьи, он обязан записать `EXCALIBUR DEFERRED`, но не останавливать Design Guardian/QA базового сайта.
+
 ## Когда запускать
 
-Excalibur нельзя запускать сразу после Core/AURA. Он запускается только после того, как Aurora уже собрала базовую структуру сайта и blog slot:
+Excalibur нельзя запускать сразу после Core/AURA. Он запускается автоматически только после того, как Aurora уже собрала, задеплоила и проверила базовый сайт:
 
 ```text
 teya-memory/wp/aurora-page-selection.md
@@ -29,9 +31,10 @@ teya-memory/wp/theme/<theme-slug>/
 teya-memory/wp/theme-base-report.md
 teya-memory/wp/page-build-report.md
 teya-memory/wp/content-completeness-report.md
+teya-memory/wp/release-gate-report.md  # PASS for baseline site
 ```
 
-Если этих артефактов нет, Excalibur обязан остановиться со статусом `❌ EXCALIBUR BLOCKER: site blog slot is not ready yet`. На раннем этапе допускается только AURA cover concept/skeleton, но не article writing.
+Если этих артефактов нет или release gate не PASS, Excalibur обязан остановиться со статусом `EXCALIBUR DEFERRED: baseline site is not ready yet`, записать причину в run log/fragment и вернуть управление Директору. На раннем этапе допускается только AURA cover concept/skeleton, но не article writing.
 
 ## Sub-skills (обязательно)
 
@@ -163,6 +166,8 @@ teya-memory/fragments/excalibur.md
 | `❌ COVER CONCEPT BLOCKER` | нет AURA concept или family lock           |
 | `❌ COVER BLOCKER`         | MCP / scene / alt                          |
 
+Эти blockers не являются release blockers базового сайта. Директор продолжает Design Guardian/QA, а Excalibur остаётся в deferred backlog.
+
 
 ## Fragment marker
 
@@ -179,4 +184,4 @@ Borrowed patterns (не копировать целиком — Teya HTML contra
 
 ## Публикация
 
-Excalibur не обязан деплоить. Aurora / deploy импортирует cover в WP Media Library + `schema.jsonld` в theme/SEO layer.
+Excalibur не обязан деплоить. Aurora / deploy импортирует cover в WP Media Library + `schema.jsonld` в theme/SEO layer. Если publish запускается, cover должен пройти byte-signature + Pillow decode verification; WebP/JPEG под именем `cover.png` должен быть пересохранён как настоящий PNG до WP upload.

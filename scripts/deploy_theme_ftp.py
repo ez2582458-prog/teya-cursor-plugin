@@ -7,6 +7,8 @@ import ftplib
 import sys
 from pathlib import Path
 
+from teya_release_gate import IMAGE_EXTENSIONS, validate_image_file
+
 
 def load_env(path: Path) -> dict[str, str]:
     data: dict[str, str] = {}
@@ -68,6 +70,18 @@ def has_duplicate_docroot(remote_path: str) -> bool:
     return "public_html/avrora/public_html" in compact or "public_html/public_html" in compact
 
 
+def validate_theme_images(theme_local: Path) -> list[str]:
+    images_dir = theme_local / "assets" / "images"
+    if not images_dir.is_dir():
+        return []
+
+    errors: list[str] = []
+    for image_path in sorted(images_dir.rglob("*")):
+        if image_path.is_file() and image_path.suffix.lower() in IMAGE_EXTENSIONS:
+            errors.extend(validate_image_file(image_path))
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-root", required=True)
@@ -89,6 +103,13 @@ def main() -> int:
 
     theme_local = root / "teya-memory" / "wp" / "theme" / args.theme_slug
     ignore = {".git", "node_modules", ".DS_Store", ".deployignore"}
+
+    image_errors = validate_theme_images(theme_local)
+    if image_errors:
+        print("ASSET_VERIFY_BLOCKER: theme contains invalid image files")
+        for error in image_errors:
+            print(f"- {error}")
+        return 1
 
     ftp = ftplib.FTP()
     try:

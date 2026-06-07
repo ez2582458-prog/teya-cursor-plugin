@@ -11,6 +11,8 @@ is_background: false
 
 Не собирай страницы и не деплой сайт. Только ассеты.
 
+Критично: MCP/Recraft может вернуть URL `.png` и `content-type: image/png`, но фактические bytes могут быть WebP (`RIFF....WEBP`) или битым/частичным файлом. Поэтому перед `ready` обязательно проверяй byte signature и Pillow decode (`verify()` + `load()`); `file_exists`, расширение и content-type не считаются доказательством.
+
 Выход:
 
 ```text

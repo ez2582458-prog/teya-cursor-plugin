@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from teya_release_gate import IMAGE_EXTENSIONS, validate_image_file
+
 # Fallback alts when registry omits alt_text (kovcheg-kids defaults).
 DEFAULT_ALT_BY_FILE: dict[str, str] = {
     "hero-mascot-kovcheg.png": "Робот Ковчег — маскот школы вайбкодинга",
@@ -48,6 +50,10 @@ def build_manifest(
         if not alt:
             raise RuntimeError(f"Missing alt_text for asset {item.get('id')} ({file_name})")
         local_path = theme_images_dir / file_name
+        if local_path.suffix.lower() in IMAGE_EXTENSIONS:
+            image_errors = validate_image_file(local_path)
+            if image_errors:
+                raise RuntimeError(f"Invalid image asset {local_path}: {'; '.join(image_errors)}")
         assets.append(
             {
                 "registry_id": item.get("id", file_name),
@@ -70,6 +76,10 @@ def build_manifest(
         if not alt:
             raise RuntimeError(f"Missing alt_text for extra file {file_name}")
         local_path = theme_images_dir / file_name
+        if local_path.suffix.lower() in IMAGE_EXTENSIONS:
+            image_errors = validate_image_file(local_path)
+            if image_errors:
+                raise RuntimeError(f"Invalid image asset {local_path}: {'; '.join(image_errors)}")
         assets.append(
             {
                 "registry_id": extra.get("registry_id", Path(file_name).stem),

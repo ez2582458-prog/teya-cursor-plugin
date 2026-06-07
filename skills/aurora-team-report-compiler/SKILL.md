@@ -14,6 +14,8 @@ description: Компилирует Aurora reports из split evidence: theme-ba
 ```text
 teya-memory/wp/theme-base-report.md
 teya-memory/wp/asset-packaging-report.md
+teya-memory/wp/animation-motion-map.md
+teya-memory/wp/animation-implementation-report.md
 teya-memory/wp/page-build-report.md
 teya-memory/wp/artifact-readiness-report.md
 teya-memory/wp/deploy-log.md
@@ -25,10 +27,11 @@ teya-memory/wp/release-gate-report.md
 ## Rules
 
 - Если split report отсутствует, итоговый статус не может быть `success`.
-- Если `theme-base-report.md`, `asset-packaging-report.md`, `page-build-report.md` или `artifact-readiness-report.md` отсутствуют, запрещено создавать финальные `site-spec.json`/`build-report.json` со статусом `success`; статус только `CONTRACT BLOCKER`.
+- Если `theme-base-report.md`, `asset-packaging-report.md`, `animation-motion-map.md`, `animation-implementation-report.md`, `page-build-report.md` или `artifact-readiness-report.md` отсутствуют, запрещено создавать финальные `site-spec.json`/`build-report.json` со статусом `success`; статус только `CONTRACT BLOCKER`.
 - Если `release-gate-report.md` содержит failure или отсутствует, итоговый статус `RELEASE BLOCKER`.
 - `site-spec.json` и `build-report.json` должны отражать реальные факты, не желаемое состояние.
 - `paint_evidence_status: verified` запрещён до появления `paint-qa/paint-evidence.json`.
+- `animation_motion_status`, `animation_dependency_status`, `reduced_motion_status`, `threejs_scene_status` должны быть заполнены из motion reports, а не придуманы.
 - `wp_media_import_status: completed` запрещён без `wp-media-map.json` с direct `/wp-content/uploads/` URLs.
 - Если WP Media import намеренно skipped и используются theme-local assets, статус должен быть `theme_local_assets_only`, не `completed`.
 - Если public live URL не отдаёт theme CSS / `/wp-json/`, записать `LIVE BLOCKER` с evidence, не "домен не прилинкован" без Beget stub text.

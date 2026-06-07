@@ -14,10 +14,11 @@ description: Проверяет готовность всех входных а�
 - Research: dossier, competitors, offers, audience, fact-bank.
 - Semantic core: `06-url-map.csv`, `07-content-briefs.md`, `11-blog-topics.md`.
 - AURA: design, source decomposition, visual budget, section blueprints, visual inventory, transitions, asset registry.
-- Aurora Team maps: blueprint, content, navigation, schema, indexing, local entity, performance/a11y, conversion, security/release.
+- Aurora Team maps: blueprint, content, navigation, schema, indexing, local entity, performance/a11y, conversion, security/release, motion plan.
 - Blog slot: `/blog/`, homepage blog slot, `single.php` planned, but Excalibur articles not required yet.
 - Identity: project/site name, theme slug, public URL target, selected pages match across reports.
 - Asset packaging: `asset-packaging-report.md`, theme `media-map.json`, and real files in `theme/<theme-slug>/assets/images/`.
+- Motion: `animation-motion-map.md` exists, matches AURA/source sections, defines reduced-motion and performance rules, and has fragment `aurora-team-motion.md`.
 - Stale maps: если schema/navigation/performance/security maps были созданы до `page-content-pack.md`, потребовать resync или явно записать `accepted_after_content_pack=true` с причиной.
 
 ## Blockers
@@ -29,6 +30,7 @@ description: Проверяет готовность всех входных а�
 - selected/build pages differ between AURA, semantic core and Aurora Team;
 - `AURA_ASSET_REGISTRY.json` has required cutouts without `transparent_url`/`packaged_url`;
 - отсутствует `asset-packaging-report.md` или любой file из theme `media-map.json`;
+- отсутствует `animation-motion-map.md` или motion map ignores required animated/interactive/3D/transition zones from AURA;
 - любой map говорит `page-content-pack pending/absent`, когда `page-content-pack.md` уже есть;
 - reports contain `success` from an older run or contradict current `site.inv`;
 - Excalibur articles are required before the site blog slot exists.

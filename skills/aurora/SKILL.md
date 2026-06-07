@@ -36,6 +36,7 @@ teya-memory/wp/theme-base-report.md
 ```text
 teya-memory/wp/theme-base-report.md
 teya-memory/wp/asset-packaging-report.md
+teya-memory/wp/animation-motion-map.md
 teya-memory/wp/artifact-readiness-report.md
 teya-memory/wp/theme/<theme-slug>/media-map.json
 ```
@@ -43,6 +44,8 @@ teya-memory/wp/theme/<theme-slug>/media-map.json
 И должны существовать реальные files из `media-map.json` в `teya-memory/wp/theme/<theme-slug>/assets/images/`.
 
 Если любого файла/ассета нет — Aurora обязана остановиться со статусом `AURORA PRECONDITION BLOCKER`. Нельзя "догрузить ассеты самой" и продолжить: это работа `aurora-team-asset-packager`.
+
+Aurora не проектирует и не внедряет production motion сама. Она обязана сохранить selectors/classes/data attributes и DOM structure, указанные в `animation-motion-map.md`, чтобы `aurora-team-motion` mode `MOTION IMPLEMENT` мог внедрить GSAP/Three.js/CSS animations после Page Builder.
 
 Выход обязан включать:
 
@@ -58,6 +61,7 @@ teya-memory/wp/page-build-report.md
 
 - `AURORA ASSET PACKAGER` — теперь это `aurora-team-asset-packager`.
 - `AURORA DEPLOY MEDIA` — теперь это `aurora-team-wp-deploy-media`.
+- `AURORA MOTION IMPLEMENT` — теперь это `aurora-team-motion`.
 - report compilation — теперь это `aurora-team-report-compiler`.
 - browser paint evidence — теперь это `aurora-team-paint-evidence`.
 - release gate — теперь это `aurora-team-release-gate`.

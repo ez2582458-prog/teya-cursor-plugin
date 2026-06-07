@@ -11,6 +11,9 @@ import sys
 import urllib.request
 from pathlib import Path
 
+from asset_download import download_url_bytes
+from teya_release_gate import sniff_image_format, validate_image_file
+
 
 def project_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -30,6 +33,82 @@ def load_env(root: Path) -> dict[str, str]:
     raise FileNotFoundError("teya.env.local not found under teya-memory/")
 
 
+def cover_url_from_registry(registry_path: Path) -> str:
+    if not registry_path.is_file():
+        return ""
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    return str(
+        registry.get("packaged_url")
+        or registry.get("attachment_url")
+        or registry.get("url")
+        or registry.get("cover_url")
+        or registry.get("image_url")
+        or ""
+    ).strip()
+
+
+def normalize_cover_png(cover_path: Path, registry_path: Path) -> dict[str, object]:
+    evidence: dict[str, object] = {
+        "path": str(cover_path),
+        "source": "existing_file",
+        "decode_verified": False,
+    }
+    errors = validate_image_file(cover_path) if cover_path.is_file() else [f"missing cover file: {cover_path}"]
+
+    if errors:
+        remote_url = cover_url_from_registry(registry_path)
+        if not remote_url:
+            raise RuntimeError("; ".join(errors) + "; no remote cover URL in cover-registry.json")
+        data, remote_evidence = download_url_bytes(remote_url, timeout=20, retries=5, chunk_size=16 * 1024)
+        detected = sniff_image_format(data)
+        if not detected:
+            raise RuntimeError("downloaded cover bytes are not a known image format")
+        cover_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = cover_path.with_name(f"{cover_path.stem}.tmp{cover_path.suffix}")
+        try:
+            if detected == "png":
+                tmp.write_bytes(data)
+            elif detected in {"webp", "jpeg", "gif"}:
+                from PIL import Image
+
+                with Image.open(io.BytesIO(data)) as image:
+                    image.save(tmp, format="PNG")
+            else:
+                raise RuntimeError(f"unsupported cover format: {detected}")
+            cover_errors = validate_image_file(tmp)
+            if cover_errors:
+                raise RuntimeError("; ".join(cover_errors))
+            tmp.replace(cover_path)
+        finally:
+            tmp.unlink(missing_ok=True)
+        evidence.update(
+            {
+                "source": "range_download",
+                "remote_url": remote_url,
+                "remote_content_type": remote_evidence.get("content_type"),
+                "remote_content_range": remote_evidence.get("content_range"),
+                "remote_signature_hex": remote_evidence.get("signature_hex"),
+                "downloaded_bytes": len(data),
+                "detected_remote_format": detected,
+            }
+        )
+
+    final_errors = validate_image_file(cover_path)
+    if final_errors:
+        raise RuntimeError("; ".join(final_errors))
+    if sniff_image_format(cover_path.read_bytes()) != "png":
+        raise RuntimeError(f"cover must be a real PNG after normalization: {cover_path}")
+
+    evidence.update(
+        {
+            "bytes": cover_path.stat().st_size,
+            "detected_format": "png",
+            "decode_verified": True,
+        }
+    )
+    return evidence
+
+
 def load_article(article_dir: Path) -> dict:
     meta_path = article_dir / "article.meta.json"
     html_path = article_dir / "article.html"
@@ -40,12 +119,14 @@ def load_article(article_dir: Path) -> dict:
     cover_path = article_dir / "cover" / "cover.png"
     schema_path = article_dir / "schema.jsonld"
     cover_b64 = ""
+    cover_evidence: dict[str, object] = {}
+    cover_reg = article_dir / "cover" / "cover-registry.json"
     if cover_path.is_file():
+        cover_evidence = normalize_cover_png(cover_path, cover_reg)
         cover_b64 = base64.b64encode(cover_path.read_bytes()).decode("ascii")
     schema_raw = ""
     if schema_path.is_file():
         schema_raw = schema_path.read_text(encoding="utf-8").strip()
-    cover_reg = article_dir / "cover" / "cover-registry.json"
     cover_alt = meta.get("cover_alt") or meta.get("cover_alt_text") or ""
     if cover_reg.is_file():
         reg = json.loads(cover_reg.read_text(encoding="utf-8"))
@@ -56,6 +137,7 @@ def load_article(article_dir: Path) -> dict:
         "excerpt": meta.get("description", ""),
         "content": content,
         "cover_b64": cover_b64,
+        "cover_evidence": cover_evidence,
         "cover_alt": cover_alt,
         "schema_jsonld": schema_raw,
         "topic_id": meta.get("topic_id", ""),
@@ -147,10 +229,11 @@ def publish_via_ftp(env: dict[str, str], php: str, public_base: str) -> str:
     ftp.quit()
 
     url = public_base.rstrip("/") + "/" + remote
-    opener = urllib.request.build_opener()
-    opener.addheaders = [("User-Agent", "TeyaExcaliburPublish/1.0")]
-    urllib.request.install_opener(opener)
-    out = urllib.request.urlopen(url, timeout=180).read().decode("utf-8", errors="replace")
+    with urllib.request.urlopen(
+        urllib.request.Request(url, headers={"User-Agent": "TeyaExcaliburPublish/1.0"}),
+        timeout=180,
+    ) as response:
+        out = response.read().decode("utf-8", errors="replace")
 
     ftp = ftplib.FTP()
     ftp.connect(env["FTP_HOST"], int(env.get("FTP_PORT", "21")), timeout=120)
@@ -197,6 +280,7 @@ def main() -> int:
         "slug": payload["slug"],
         "topic_id": payload["topic_id"],
         "permalink": permalink,
+        "cover_evidence": payload.get("cover_evidence", {}),
         "raw_output": out,
         "verdict": "pass" if "OK post=" in out else "fail",
     }

@@ -7,7 +7,7 @@ description: Excalibur WP Publish — публикация готовой ста
 
 ## Когда
 
-После `✅ ARTICLE OK` от Excalibur и по запросу Директора / пользователя (`allow_publish=yes` в `site.inv`).
+После `✅ ARTICLE OK` от Excalibur и по запросу Директора / пользователя (`allow_publish=yes` в `site.inv`). В phase1 это post-ready enrichment: publish failure не должен ломать готовность базового сайта, а должен стать `EXCALIBUR PUBLISH DEFERRED`.
 
 ## Контракт
 
@@ -17,7 +17,7 @@ description: Excalibur WP Publish — публикация готовой ста
 
 - `article-qa.md` → PASS
 - `link-verify.json` → pass (или fix links)
-- `cover/cover.png`, `cover-registry.json` с alt
+- `cover/cover.png`, `cover-registry.json` с alt; cover должен быть настоящим декодируемым PNG после byte-signature/Pillow verification
 - `teya.env.local` — FTP_*, PUBLIC_SITE_URL
 
 ## Шаги
@@ -51,3 +51,4 @@ python teya/scripts/teya_excalibur_wp_publish.py --article-dir teya-memory/blog/
 ## Blockers
 
 - `❌ PUBLISH BLOCKER` — QA / links / credentials / allow_publish
+- `❌ PUBLISH BLOCKER` — cover без alt, не проходит decode verification или не может быть нормализован в настоящий PNG

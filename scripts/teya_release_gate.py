@@ -8,6 +8,7 @@ and paint evidence agree with each other.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import re
 import sys
@@ -34,6 +35,59 @@ SUCCESS_STATUSES = {
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg")
 FONT_EXTENSIONS = (".woff2", ".woff", ".ttf", ".otf")
+
+
+def sniff_image_format(data: bytes) -> str:
+    stripped = data.lstrip()
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpeg"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    if stripped[:128].lower().startswith((b"<svg", b"<?xml")) and b"<svg" in stripped[:512].lower():
+        return "svg"
+    return ""
+
+
+def validate_image_file(path: Path) -> list[str]:
+    errors: list[str] = []
+    suffix = path.suffix.lower().lstrip(".")
+    if suffix == "jpg":
+        suffix = "jpeg"
+
+    try:
+        data = path.read_bytes()
+    except OSError as exc:
+        return [f"cannot read image asset {path}: {exc}"]
+
+    if not data:
+        return [f"empty image asset: {path}"]
+
+    detected = sniff_image_format(data)
+    if not detected:
+        return [f"image asset has unknown/corrupt signature: {path}"]
+    if suffix and suffix != detected:
+        errors.append(f"image extension/content mismatch: {path} is .{suffix} but bytes are {detected}")
+
+    if detected == "svg":
+        return errors
+
+    try:
+        from PIL import Image
+
+        with Image.open(io.BytesIO(data)) as image:
+            image.verify()
+        with Image.open(io.BytesIO(data)) as image:
+            image.load()
+    except ImportError:
+        errors.append(f"Pillow is not installed; cannot decode-verify raster image: {path}")
+    except Exception as exc:  # noqa: BLE001 - release gate must catch decoder failures.
+        errors.append(f"image asset is not decodable by Pillow: {path}: {exc}")
+
+    return errors
 
 
 def read_json(path: Path, errors: list[str]) -> dict[str, Any]:
@@ -176,6 +230,9 @@ def check_report_consistency(site_spec: dict[str, Any], build_report: dict[str, 
         for field in (
             "local_asset_files_status",
             "browser_subresources_status",
+            "animation_motion_status",
+            "animation_dependency_status",
+            "reduced_motion_status",
             "unstyled_live_paint_status",
             "wp_media_import_status",
             "paint_evidence_status",
@@ -196,6 +253,9 @@ def check_split_reports(wp_dir: Path, build_report: dict[str, Any], errors: list
     for file_name in (
         "theme-base-report.md",
         "asset-packaging-report.md",
+        "asset-transport-report.md",
+        "animation-motion-map.md",
+        "animation-implementation-report.md",
         "page-build-report.md",
         "artifact-readiness-report.md",
     ):
@@ -209,6 +269,8 @@ def check_media_maps(project_root: Path, wp_dir: Path, theme_dir: Path, errors: 
     theme_media_map = read_json(theme_dir / "media-map.json", errors)
 
     for label, media_map in (("wp-media-map.json", wp_media_map), ("theme media-map.json", theme_media_map)):
+        if label == "theme media-map.json" and media_map.get("transport_status") != "pass":
+            errors.append("theme media-map.json transport_status is not pass; asset transport did not complete")
         assets = normalize_assets(media_map)
         if not assets:
             errors.append(f"{label} has no assets array/object")
@@ -235,6 +297,8 @@ def check_media_maps(project_root: Path, wp_dir: Path, theme_dir: Path, errors: 
                 candidate = theme_dir / relative if str(file_name).replace("\\", "/").startswith("assets/") else theme_dir / "assets" / "images" / relative
                 if not candidate.is_file():
                     errors.append(f"{label}: theme asset file missing for {registry_id}: {candidate.relative_to(theme_dir)}")
+                elif candidate.suffix.lower() in IMAGE_EXTENSIONS:
+                    errors.extend(f"{label}: {registry_id}: {error}" for error in validate_image_file(candidate))
 
             if attachment_url:
                 parsed = urllib.parse.urlparse(attachment_url)
@@ -300,12 +364,20 @@ def check_theme_assets(theme_dir: Path, errors: list[str]) -> None:
             asset_path = (css_path.parent / raw_url).resolve()
             if raw_url.lower().endswith(IMAGE_EXTENSIONS + FONT_EXTENSIONS) and not asset_path.is_file():
                 errors.append(f"css references missing asset: {css_path} -> {raw_url}")
+            elif raw_url.lower().endswith(IMAGE_EXTENSIONS) and asset_path.is_file():
+                errors.extend(validate_image_file(asset_path))
 
     header = read_text(theme_dir / "header.php")
     for raw_url in re.findall(r"/assets/[^'\"\s>]+", header):
         relative = raw_url.lstrip("/")
         if relative.lower().endswith(IMAGE_EXTENSIONS + FONT_EXTENSIONS) and not (theme_dir / relative).is_file():
             errors.append(f"header preload/reference missing asset: {relative}")
+
+    images_dir = theme_dir / "assets" / "images"
+    if images_dir.is_dir():
+        for image_path in sorted(images_dir.rglob("*")):
+            if image_path.is_file() and image_path.suffix.lower() in IMAGE_EXTENSIONS:
+                errors.extend(validate_image_file(image_path))
 
 
 def check_paint_evidence(wp_dir: Path, public_url: str, require_live: bool, errors: list[str]) -> None:

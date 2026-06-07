@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import shutil
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+from asset_download import download_url_bytes
+from teya_release_gate import validate_image_file
 
 ROOT = Path(__file__).resolve().parents[2]
 THEME = ROOT / "teya-memory" / "wp" / "theme" / "teya-kovcheg-kids"
@@ -54,10 +56,13 @@ def download_assets() -> list[str]:
     for name, url in assets:
         dest = IMG / name
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "TeyaAurora/1.0"})
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                dest.write_bytes(resp.read())
-            print(f"  asset OK: {name}")
+            data, evidence = download_url_bytes(url, timeout=20, retries=5, chunk_size=16 * 1024)
+            dest.write_bytes(data)
+            image_errors = validate_image_file(dest)
+            if image_errors:
+                dest.unlink(missing_ok=True)
+                raise RuntimeError("; ".join(image_errors))
+            print(f"  asset OK: {name} ({len(data)} bytes, sig={evidence.get('signature_hex')})")
         except Exception as e:
             missing.append(name)
             print(f"  asset FAIL: {name} — {e}")

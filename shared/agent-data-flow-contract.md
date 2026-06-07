@@ -9,14 +9,14 @@
   -> teya-researcher (Исследование темы)
   -> core/yadryshko (Ядрышко: семантика и 11-blog-topics.md) || aura-designer (Дизайн и обложки блога)
   -> aurora-team-lead (Проектирование структуры)
-  -> aurora-team-* maps || aurora-team-asset-packager
+  -> aurora-team-* maps || aurora-team-asset-packager || aurora-team-motion (MOTION PLAN)
   -> aurora-team-artifact-auditor (input go/no-go)
   -> aurora: THEME BASE -> PAGE BUILDER
-  -> aurora-team-wp-deploy-media -> aurora-team-report-compiler
-  -> excalibur (Статьи и обложки для готового blog slot)
-  -> aurora: BLOG INTEGRATOR (встраивание статей, covers, schema, WP posts)
+  -> aurora-team-motion (MOTION IMPLEMENT)
   -> aurora-team-paint-evidence
   -> aurora-team-release-gate / teya_release_gate.py
+  -> excalibur (auto post-ready enrichment; non-blocking)
+  -> aurora: BLOG INTEGRATOR (only if Excalibur PASS; then repeat deploy/report/paint/release for enriched site)
   -> aurora-team-design-guardian (Дизайн-контроль)
   -> aurora-team-qa (Финальная проверка)
 ```
@@ -158,6 +158,7 @@ aurora-team-performance-a11y
 aurora-team-conversion
 aurora-team-security-release
 aurora-team-asset-packager
+aurora-team-motion
 ```
 
 Строго последовательно:
@@ -166,17 +167,19 @@ aurora-team-asset-packager
 aurora-team-artifact-auditor
   -> aurora: THEME BASE
   -> aurora: PAGE BUILDER
+  -> aurora-team-motion: MOTION IMPLEMENT
   -> aurora-team-wp-deploy-media
-  -> aurora-team-report-compiler
-  -> excalibur
-  -> aurora: BLOG INTEGRATOR
   -> aurora-team-paint-evidence
   -> aurora-team-release-gate
+  -> excalibur (non-blocking; may defer)
+  -> aurora: BLOG INTEGRATOR (only if Excalibur PASS)
   -> aurora-team-design-guardian
   -> aurora-team-qa
 ```
 
 `AURORA THEME BASE` можно параллелить с `aurora-team-asset-packager`, если оба работают по read-only входам и не пишут один файл.
+
+Excalibur запускается автоматически после успешного release gate базового сайта. `EXCALIBUR DEFERRED` не блокирует Design Guardian / QA базового сайта; blog integration выполняется только при Excalibur PASS.
 
 ## Aurora Reports Передаются Design Guardian и QA
 
@@ -187,6 +190,8 @@ teya-memory/wp/aurora-page-selection.md
 teya-memory/wp/theme-base-report.md
 teya-memory/wp/asset-packaging-report.md
 teya-memory/wp/page-build-report.md
+teya-memory/wp/animation-motion-map.md
+teya-memory/wp/animation-implementation-report.md
 teya-memory/wp/artifact-readiness-report.md
 teya-memory/wp/site-spec.json
 teya-memory/wp/build-report.json
@@ -218,6 +223,10 @@ per_page_visual_gaps
 local_asset_files_status
 missing_local_asset_files
 browser_subresources_status
+animation_motion_status
+animation_dependency_status
+reduced_motion_status
+threejs_scene_status
 unstyled_live_paint_status
 wp_media_map_status
 wp_media_import_status

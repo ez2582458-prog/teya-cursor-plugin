@@ -1,12 +1,12 @@
 # Excalibur — WordPress publish contract
 
-Excalibur готовит артефакты локально; публикация в WP — **опциональная фаза 2b** (Aurora или скрипт).
+Excalibur готовит артефакты локально; публикация в WP — post-ready enrichment (Aurora или скрипт). Failure/deferred публикации не блокирует готовность базового сайта.
 
 ## Prerequisites
 
 - `article.html`, `article.meta.json`, `article-qa.md` (verdict PASS)
 - `schema.jsonld`
-- `cover/cover.png` + `cover-registry.json` (alt)
+- `cover/cover.png` + `cover-registry.json` (alt); cover должен быть настоящим PNG после byte-signature/Pillow decode verification
 - `link-verify.json` (verdict pass или documented skips)
 - `site.inv` / `teya.env.local` — FTP + `PUBLIC_SITE_URL`
 - Тема с `/blog/` и `single.php` (фаза 1 Aurora)
@@ -28,7 +28,7 @@ python teya/scripts/teya_excalibur_wp_publish.py \
 ## Что делает publish
 
 1. `wp_insert_post` / `wp_update_post` — title, slug, content, excerpt
-2. Featured image из `cover/cover.png` + alt в attachment meta
+2. Featured image из `cover/cover.png` + alt в attachment meta. Перед upload скрипт нормализует WebP/JPEG/GIF под именем `cover.png` в настоящий PNG или ставит publish blocker.
 3. Post meta `_teya_schema_jsonld` — JSON-LD для вывода в `single.php` (Aurora)
 
 ## Артефакты после publish
@@ -64,6 +64,7 @@ if ($schema) {
 
 - `❌ PUBLISH BLOCKER` — QA не PASS, link-verify fail, нет credentials
 - `❌ PUBLISH BLOCKER` — cover без alt
+- `❌ PUBLISH BLOCKER` — cover missing/corrupt, не декодируется Pillow или не может быть нормализован в PNG
 - Production HTML не должен содержать MCP URLs — только WP media для featured image
 
 ## Skill

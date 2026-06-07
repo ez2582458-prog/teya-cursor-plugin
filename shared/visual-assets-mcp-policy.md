@@ -138,7 +138,11 @@ Aurora обязана:
 - **никогда** не скачивать исходный `url` для cutout/overlap/hero-object zones;
 - если `requires_background_removal: true`, но `transparent_url` пуст — вызвать `recraft_remove_background` через MCP KV или blocker;
 - скачать/сохранить MCP KV images в локальную тему;
+- скачивать MCP/CDN изображения устойчиво: сначала probe `Range: bytes=0-15`, затем полный файл Range-чанками с retry и сверкой общей длины. Один полный `GET/read()` может зависать на `tempfile.aiquickdraw.com` и не является достаточным download evidence.
 - проверить `file_exists` для каждого path из `inc/assets.php` / `AURA_ASSET_REGISTRY.json`;
+- проверить каждый raster asset по bytes, а не по словам MCP: PNG начинается с `89 50 4E 47 0D 0A 1A 0A`, WebP начинается с `RIFF....WEBP`, JPEG с `FF D8 FF`. `content-type: image/png` и URL `.png` не являются доказательством PNG.
+- выполнить decode verification (`PIL.Image.open(...).verify()` и повторный `load()`) для каждого PNG/JPEG/WebP/GIF. Если decoder падает или GET тела таймаутит/обрывается — это `ASSET_BINARY_BLOCKER`, не ready.
+- если MCP/Recraft возвращает `.png` URL, но byte signature WebP, агент обязан либо пересохранить настоящий PNG после успешного декодирования, либо сохранить `.webp` с честным расширением и обновить maps/templates. Просто переименовывать WebP в `.png` запрещено.
 - включить эти файлы в zip/package/deploy;
 - записать `local_asset_files_status` и `missing_local_asset_files` в `site-spec.json`, `build-report.json`, `content-completeness-report.md`.
 
@@ -179,5 +183,10 @@ Aurora после деплоя обязана:
 - `AURA_ASSET_REGISTRY.json` не содержит URL/пути созданных ассетов;
 - required visual asset отсутствует локально в `teya-memory/wp/theme/<theme-slug>/assets/images/` или не попал в package/deploy;
 - `inc/assets.php` ссылается на asset path, которого нет в локальной теме;
+- local asset имеет расширение `.png`, но byte signature `RIFF....WEBP`, HTML/error page или unknown;
+- MCP/Recraft URL имеет `content-type: image/png`, но bytes не PNG;
+- asset URL существует, но тело файла не скачивается полностью и стабильно;
+- агент не пробует Range-chunk download после timeout/partial read полного GET;
+- raster asset не проходит Pillow verify/load;
 - на mobile asset обрезается, перекрывает текст или ломает CTA;
 - агент скрыл проблему словами “можно добавить позже”.
