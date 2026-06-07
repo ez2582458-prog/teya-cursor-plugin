@@ -4,6 +4,24 @@
 
 Подробная карта передачи данных между агентами: `teya/shared/agent-data-flow-contract.md`.
 
+## Новый сайт = новая память
+
+Перед созданием нового сайта активная память должна быть очищена машинно:
+
+```bash
+python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT>
+```
+
+Контракт reset:
+
+- старая `teya-memory/` переносится в `teya-memory-archive/teya-memory-<timestamp>/`;
+- новая `teya-memory/` создаётся пустой;
+- создаётся `teya-memory/memory-reset.json` со статусом `clean`;
+- `site.inv` и `teya.env.local` не сохраняются по умолчанию, чтобы доступы и данные предыдущего сайта не попали в новый проект;
+- `--keep-secrets` допустим только по явному запросу пользователя.
+
+Агенты не читают `teya-memory-archive/` во время нового прогона, если пользователь явно не попросил восстановить старый сайт.
+
 ## Структура
 
 ```text

@@ -4,7 +4,15 @@ description: Teya фаза 1 — Research, затем Ядрышko + AURA, Auror
 
 # Teya — фаза 1
 
-Перед первым запуском пользователь заполняет:
+Перед первым запуском нового сайта Директор обязан очистить память старого проекта:
+
+```bash
+python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT>
+```
+
+Скрипт архивирует старую `teya-memory/` в `teya-memory-archive/` и создаёт чистую память. Используй `--keep-secrets` только если пользователь явно просит сохранить `site.inv` и `teya.env.local`.
+
+После reset пользователь заполняет:
 
 - `teya-memory/site.inv` — данные бизнеса, дизайна, контента и разрешения
 - `teya-memory/teya.env.local` — приватные доступы к WP/хостингу/SMTP/аналитике, если нужен деплой

@@ -27,11 +27,29 @@ alwaysApply: true
 
 `<PROJECT_ROOT>` — корень workspace. Без абсолютных локальных путей.
 
-### Сброс перед новой сессией
+### Сброс перед новым сайтом
 
-1. **Write** → `teya-memory/01-handoff.md` — одна строка: `# Teya — новая сессия`
-2. Очистить `teya-memory/fragments/`
-3. Без сброса **не** вызывать Task
+Перед созданием нового сайта Директор обязан выполнить machine reset памяти:
+
+```text
+python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT>
+```
+
+Что делает reset:
+
+- переносит старую `teya-memory/` в `teya-memory-archive/teya-memory-<timestamp>/`;
+- создаёт чистую `teya-memory/` с пустыми `fragments/`, `research/`, `semantic-core/`, `design/`, `wp/`, `blog/`;
+- создаёт fresh `00-brief.md`, `01-handoff.md`, `memory-reset.json`;
+- сохраняет только safe templates `site.inv.example` и `teya.env.example`;
+- по умолчанию НЕ переносит старые `site.inv` и `teya.env.local`, чтобы данные/доступы предыдущего сайта не попали в новый.
+
+Если пользователь явно просит сохранить доступы/интейк для того же клиента, можно использовать:
+
+```text
+python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT> --keep-secrets
+```
+
+Без `memory-reset.json` со свежим `status: clean` **не вызывать Task** для нового сайта.
 
 ### Фаза 1 (текущая)
 
