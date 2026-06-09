@@ -8,6 +8,8 @@ import re
 import sys
 from pathlib import Path
 
+from teya_release_gate import IMAGE_EXTENSIONS, validate_image_file
+
 try:
     import paramiko
 except ImportError:
@@ -37,6 +39,18 @@ def should_skip(rel: str, ignore_names: set[str]) -> bool:
     return False
 
 
+def validate_theme_images(theme_local: Path) -> list[str]:
+    images_dir = theme_local / "assets" / "images"
+    if not images_dir.is_dir():
+        return []
+
+    errors: list[str] = []
+    for image_path in sorted(images_dir.rglob("*")):
+        if image_path.is_file() and image_path.suffix.lower() in IMAGE_EXTENSIONS:
+            errors.extend(validate_image_file(image_path))
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-root", required=True)
@@ -56,9 +70,20 @@ def main() -> int:
         print("BLOCKER: missing SSH_HOST, SSH_USER, or SSH_THEME_PATH")
         return 1
 
+    if env.get("TEYA_ALLOW_PUBLISH", "").strip().lower() != "yes":
+        print("BLOCKER: TEYA_ALLOW_PUBLISH != yes")
+        return 1
+
     theme_local = root / "teya-memory" / "wp" / "theme" / args.theme_slug
     if not theme_local.is_dir():
         print(f"BLOCKER: theme not found: {theme_local}")
+        return 1
+
+    image_errors = validate_theme_images(theme_local)
+    if image_errors:
+        print("ASSET_VERIFY_BLOCKER: theme contains invalid image files")
+        for error in image_errors:
+            print(f"- {error}")
         return 1
 
     ignore = {".git", "node_modules", ".DS_Store"}

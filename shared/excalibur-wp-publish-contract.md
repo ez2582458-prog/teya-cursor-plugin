@@ -1,6 +1,6 @@
 # Excalibur — WordPress publish contract
 
-Excalibur готовит артефакты локально; публикация в WP — post-ready enrichment (Aurora или скрипт). Failure/deferred публикации не блокирует готовность базового сайта.
+Excalibur готовит артефакты локально в Phase 1; публикация в WP — Phase 1 blog publish step после готового deploy context (Aurora Blog Integrator или скрипт). Failure/deferred публикации не блокирует готовность базового сайта, но не может быть скрыта или отложена как “фаза 2b”.
 
 ## Prerequisites
 
@@ -9,7 +9,7 @@ Excalibur готовит артефакты локально; публикаци
 - `cover/cover.png` + `cover-registry.json` (alt); cover должен быть настоящим PNG после byte-signature/Pillow decode verification
 - `link-verify.json` (verdict pass или documented skips)
 - `site.inv` / `teya.env.local` — FTP + `PUBLIC_SITE_URL`
-- Тема с `/blog/` и `single.php` (фаза 1 Aurora)
+- Тема с `/blog/` и `single.php` (Phase 1 Aurora)
 
 ## Скрипт
 

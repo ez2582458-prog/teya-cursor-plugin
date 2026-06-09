@@ -31,7 +31,7 @@ description: Aurora Team Content — SEO/GEO контент-пакет стра�
 - H2/H3 структура;
 - готовый hero copy;
 - готовые тексты секций, а не только названия блоков;
-- homepage blog section copy с 3-6 темами из `11-blog-topics.md`;
+- homepage blog section copy с 3-6 темами из `11-blog-topics.md` или Excalibur `article.meta.json`;
 - blog archive intro copy без заглушек;
 - FAQ с готовыми ответами;
 - answer-блоки 40-60 слов;
@@ -84,3 +84,4 @@ verdict:
 - страницы без FAQ, CTA и внутренних ссылок.
 - главная без раздела “Блог”/“Материалы”;
 - blog cards `скоро`, `готовится`, `пример`, `placeholder`, `lorem`.
+- писать финальные статьи блога, `article.html`, SEO longreads, BlogPosting schema или fake article excerpts. Статьями занимается только Excalibur в Phase 1. Content может дать только section copy, archive intro и card copy из `11-blog-topics.md`/Excalibur meta.

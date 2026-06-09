@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from asset_download import download_url_bytes
+from package_mcp_assets import save_as_target_format
 from teya_release_gate import validate_image_file
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -17,26 +18,43 @@ WP = ROOT / "teya-memory" / "wp"
 REGISTRY = ROOT / "teya-memory" / "design" / "AURA_ASSET_REGISTRY.json"
 
 
+def _relative_image_path(item: dict) -> str:
+    raw = str(item.get("local_path") or item.get("planned_theme_path") or item.get("path") or "").replace("\\", "/")
+    if raw.startswith("assets/images/"):
+        raw = raw[len("assets/images/") :]
+    elif raw.startswith("assets/"):
+        raw = raw[len("assets/") :]
+        if raw.startswith("images/"):
+            raw = raw[len("images/") :]
+    raw = raw.strip("/")
+    if not raw or Path(raw).is_absolute() or ".." in Path(raw).parts:
+        return ""
+    return raw
+
+
+def _remote_asset_url(item: dict) -> str:
+    keys = ("transparent_url", "remote_packaged_url", "packaged_url") if item.get("requires_background_removal") else (
+        "packaged_url",
+        "remote_packaged_url",
+        "transparent_url",
+        "url",
+    )
+    for key in keys:
+        value = str(item.get(key) or "").strip()
+        if value.startswith(("http://", "https://")):
+            return value
+    return ""
+
+
 def load_assets_from_registry() -> list[tuple[str, str]]:
     """Use packaged_url / transparent_url for cutouts, never raw gpt-image-2 url."""
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
     out: list[tuple[str, str]] = []
     for item in data.get("assets", []):
-        name = Path(item.get("planned_theme_path", "")).name
+        name = _relative_image_path(item)
         if not name:
             continue
-        packaged = item.get("packaged_url")
-        transparent = item.get("transparent_url")
-        raw = item.get("url")
-        requires_bg = item.get("requires_background_removal")
-        if requires_bg is None:
-            requires_bg = bool(transparent)
-        if requires_bg:
-            url = packaged or transparent
-            if not url:
-                raise RuntimeError(f"Cutout asset {item.get('id')} missing transparent_url/packaged_url")
-        else:
-            url = packaged or transparent or raw
+        url = _remote_asset_url(item)
         if not url:
             raise RuntimeError(f"Asset {item.get('id')} has no download URL")
         out.append((name, url))
@@ -56,13 +74,14 @@ def download_assets() -> list[str]:
     for name, url in assets:
         dest = IMG / name
         try:
-            data, evidence = download_url_bytes(url, timeout=20, retries=5, chunk_size=16 * 1024)
-            dest.write_bytes(data)
+            data, evidence = download_url_bytes(url, timeout=20, retries=6, chunk_size=8 * 1024)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            detected = save_as_target_format(data, dest)
             image_errors = validate_image_file(dest)
             if image_errors:
                 dest.unlink(missing_ok=True)
                 raise RuntimeError("; ".join(image_errors))
-            print(f"  asset OK: {name} ({len(data)} bytes, sig={evidence.get('signature_hex')})")
+            print(f"  asset OK: {name} ({len(data)} bytes, format={detected}, sig={evidence.get('signature_hex')})")
         except Exception as e:
             missing.append(name)
             print(f"  asset FAIL: {name} — {e}")

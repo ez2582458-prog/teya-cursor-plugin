@@ -84,5 +84,5 @@ Blueprint должен явно передать visual requirements в зада
 
 - главная содержит раздел “Блог” с 3-6 темами из `11-blog-topics.md`;
 - сайт содержит `/blog/` route/archive;
-- `single.php` готов для будущих статей;
+- `single.php` готов для Excalibur статей;
 - никаких fake posts, lorem, “скоро”, “статья готовится”.

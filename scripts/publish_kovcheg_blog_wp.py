@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ftplib
 import io
+import os
 import re
 import urllib.request
 from pathlib import Path
@@ -128,6 +129,13 @@ echo 'posts_count=' . wp_count_posts()->publish . PHP_EOL;
 
 
 def main() -> int:
+    if os.environ.get("TEYA_ALLOW_LEGACY_BLOG_PUBLISH") != "yes":
+        print(
+            "BLOCKED: legacy page-content-pack blog publisher is disabled. "
+            "Blog articles must be created/published by Excalibur Phase 1."
+        )
+        return 2
+
     posts = posts_data()
     php = build_php(posts)
     env = load_env()

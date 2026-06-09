@@ -25,6 +25,8 @@ is_background: false
 6. Создание меню, футера, breadcrumbs, перелинковки, schema, indexing/crawl, local entity, performance/a11y, conversion/tracking и security/release по артефактам Aurora Team.
 7. Локальная сборка, zip, деплой при разрешении, live-проверка.
 
+Aurora не пишет статьи блога. Финальные article bodies, `article.html`, longread excerpts, BlogPosting/FAQ schema, covers and article QA принадлежат только Excalibur в Phase 1.
+
 ## Источники истины
 
 Читай строго в этом порядке:
@@ -80,6 +82,7 @@ is_background: false
 - **Aurora Team Performance A11y** — источник Core Web Vitals, images/fonts, semantic HTML, keyboard/focus и accessibility.
 - **Aurora Team Conversion** — источник форм, CTA, consent, analytics goals, anti-spam и delivery.
 - **Aurora Team Security Release** — источник SiteSpec, build report, file allowlist, secrets policy, backup, rollback, deployignore и release gates.
+- **Excalibur** — единственный источник финальных статей блога, article metadata, covers, schema and publish handoff.
 - **Aurora** не придумывает ни семантику, ни дизайн, ни структуру команды. Aurora интегрирует готовые артефакты в WordPress-тему.
 
 Если AURA предлагает страницу, которой нет в семантике Ядрышка, добавь её в backlog или создай только если это обязательная служебная/UX-страница из brief (`contacts`, `privacy`, `cookies`). Если Ядрышко предлагает SEO-страницу без дизайн-описания AURA, используй ближайший шаблон из AURA и отметь это в `aurora-page-selection.md`.
@@ -239,15 +242,17 @@ Blocker, если на live остались `tempfile.aiquickdraw.com`, MCP URL
 
 ## Блог
 
-Блог обязателен для production-сайта Teya, даже если отдельный blog-subagent будет добавлен позже.
+Блог обязателен для production-сайта Teya. Финальные статьи делает только Excalibur в Phase 1.
 
 Реализуй:
 
 - раздел `/blog/` через `home.php` или `page-blog.php`;
-- `single.php`, готовый для будущих статей;
-- блок “Блог”/“Материалы” на главной с 3-6 реальными темами из `teya-memory/semantic-core/<run>/11-blog-topics.md`;
+- `single.php`, готовый для Excalibur статей;
+- блок “Блог”/“Материалы” на главной с 3-6 реальными темами из `teya-memory/semantic-core/<run>/11-blog-topics.md` или Excalibur `article.meta.json`;
 - ссылку на блог в primary menu или footer menu по `navigation-linking-map.md`;
-- Article schema support для будущих постов.
+- Article schema support для Excalibur posts.
+
+Нельзя писать substitute blog articles в Aurora Page Builder. Если Excalibur PASS отсутствует, blog slot может показывать только topic cards без article body/fake excerpt; `AURORA BLOG INTEGRATOR` запускается только по готовым Excalibur artifacts.
 
 Запрещено:
 

@@ -17,24 +17,26 @@ Excalibur пишет **полноценные статьи** для блога �
 - schema — BlogPosting + FAQPage JSON-LD;
 - обложка — **только** по `AURA_BLOG_COVER_CONCEPT` + MCP KV.
 
-Excalibur **не** меняет дизайн, **не** собирает семантику, **не** деплоит WP (опционально Aurora).
+Excalibur **не** меняет дизайн, **не** собирает семантику и **не** заменяет Aurora. Но статьи блога и их publish handoff в Phase 1 принадлежат только Excalibur.
 
-Excalibur — автоматический post-ready enrichment. Он запускается Директором после успешного hard release gate базового сайта. Если Excalibur не успел, получил QA/COVER blocker или не смог подготовить статьи, он обязан записать `EXCALIBUR DEFERRED`, но не останавливать Design Guardian/QA базового сайта.
+Excalibur — обязательный Phase 1 writer для блога. Он запускается Директором сразу после Core + AURA, когда готовы `11-blog-topics.md`, research/fact-bank и `AURA_BLOG_COVER_CONCEPT.*`. Если Excalibur не успел, получил QA/COVER blocker или не смог подготовить статьи, он обязан записать `EXCALIBUR PHASE1 DEFERRED`, но не разрешать другим агентам писать статьи вместо себя.
 
 ## Когда запускать
 
-Excalibur нельзя запускать сразу после Core/AURA. Он запускается автоматически только после того, как Aurora уже собрала, задеплоила и проверила базовый сайт:
+Excalibur запускается в Phase 1 сразу после Core/AURA. До старта обязательны:
 
 ```text
-teya-memory/wp/aurora-page-selection.md
-teya-memory/wp/theme/<theme-slug>/
-teya-memory/wp/theme-base-report.md
-teya-memory/wp/page-build-report.md
-teya-memory/wp/content-completeness-report.md
-teya-memory/wp/release-gate-report.md  # PASS for baseline site
+teya-memory/research/site-research-dossier.md
+teya-memory/research/fact-bank.md
+teya-memory/semantic-core/<latest-run>/11-blog-topics.md
+teya-memory/design/AURA_BLOG_COVER_CONCEPT.md
+teya-memory/design/AURA_BLOG_COVER_CONCEPT.json
+teya-memory/design/AURA_BLOG_COVER_PROMPTS.json
 ```
 
-Если этих артефактов нет или release gate не PASS, Excalibur обязан остановиться со статусом `EXCALIBUR DEFERRED: baseline site is not ready yet`, записать причину в run log/fragment и вернуть управление Директору. На раннем этапе допускается только AURA cover concept/skeleton, но не article writing.
+Если этих артефактов нет, Excalibur обязан остановиться со статусом `EXCALIBUR PHASE1 BLOCKER: missing Core/AURA/research inputs`, записать причину в run log/fragment и вернуть управление Директору.
+
+Если WP/deploy ещё не готов, Excalibur всё равно пишет локальные статьи, covers, schema и publish handoff. Публикация в WP выполняется в Phase 1 после deploy через `AURORA BLOG INTEGRATOR` / `excalibur-wp-publish`; это не Phase 2b.
 
 ## Sub-skills (обязательно)
 
@@ -43,7 +45,7 @@ teya-memory/wp/release-gate-report.md  # PASS for baseline site
 | ---------------------- | ------------------------------------------------- |
 | `excalibur-research`   | Перед текстом — `research-notes.md`               |
 | `excalibur-geo-qa`     | После черновика — QA, link verify, CORE-EEAT lite |
-| `excalibur-wp-publish` | Опц. фаза 2b — WP post + featured + schema meta   |
+| `excalibur-wp-publish` | Phase 1 после deploy — WP post + featured + schema meta |
 
 
 References:
@@ -63,7 +65,7 @@ Optional external reference (не заменяет Teya HTML contract):
 - `teya/shared/excalibur-article-writing-contract.md` — HTML, стиль, объём, CTA
 - `teya/shared/blog-cover-mcp-contract.md` + `blog-cover-brand-concept.md` + `blog-cover-family-registry.json`
 - `teya/shared/visual-assets-mcp-policy.md`
-- `teya/shared/excalibur-wp-publish-contract.md` — опциональная публикация WP
+- `teya/shared/excalibur-wp-publish-contract.md` — Phase 1 публикация WP при доступном deploy context
 
 ## Вход
 
@@ -93,7 +95,7 @@ Optional external reference (не заменяет Teya HTML contract):
 14. **Cover** — prefix + scene + suffix из AURA concept → MCP → `cover/cover.png`.
 15. **Interlink** — `teya_excalibur_interlinker.py --apply` для контекстной перелинковки с использованием диверсифицированных фраз `"anchor_variants"`.
 16. **AI-crawler llms.txt** — `teya_excalibur_llms_generator.py` для `llms.txt` и `llms-full.txt`.
-17. **(Опц.) WP publish** — skill `excalibur-wp-publish` + `teya_excalibur_wp_publish.py`.
+17. **Phase 1 WP publish handoff** — подготовить `wp-publish-result.json` contract; после deploy выполнить skill `excalibur-wp-publish` + `teya_excalibur_wp_publish.py` или передать готовый пакет в `AURORA BLOG INTEGRATOR`.
 
 ## Стиль (кратко)
 
@@ -166,7 +168,7 @@ teya-memory/fragments/excalibur.md
 | `❌ COVER CONCEPT BLOCKER` | нет AURA concept или family lock           |
 | `❌ COVER BLOCKER`         | MCP / scene / alt                          |
 
-Эти blockers не являются release blockers базового сайта. Директор продолжает Design Guardian/QA, а Excalibur остаётся в deferred backlog.
+Эти blockers не являются release blockers базового сайта. Директор продолжает Design Guardian/QA только с явным `EXCALIBUR PHASE1 DEFERRED`; другие агенты не имеют права создавать substitute article bodies.
 
 
 ## Fragment marker
@@ -184,4 +186,4 @@ Borrowed patterns (не копировать целиком — Teya HTML contra
 
 ## Публикация
 
-Excalibur не обязан деплоить. Aurora / deploy импортирует cover в WP Media Library + `schema.jsonld` в theme/SEO layer. Если publish запускается, cover должен пройти byte-signature + Pillow decode verification; WebP/JPEG под именем `cover.png` должен быть пересохранён как настоящий PNG до WP upload.
+Excalibur обязан подготовить publish-ready пакет в Phase 1. Aurora / deploy импортирует cover в WP Media Library + `schema.jsonld` в theme/SEO layer. Если WP credentials/deploy доступны, публикация не откладывается в Phase 2b. Cover должен пройти byte-signature + Pillow decode verification; WebP/JPEG под именем `cover.png` должен быть пересохранён как настоящий PNG до WP upload.

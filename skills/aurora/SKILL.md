@@ -14,8 +14,8 @@ Aurora не запускает subagents. Все Task запускает Дир�
 Aurora нельзя запускать как один большой “собери всё” Task. Директор обязан вызывать Aurora только в малых режимах:
 
 1. `AURORA THEME BASE` — каркас темы, tokens, компоненты, header/footer, menus, legal/cookie shell, base CSS/JS. Без Excalibur, без deploy.
-2. `AURORA PAGE BUILDER` — главная + до 4 внутренних страниц, blog slot по `11-blog-topics.md`, без написания статей Excalibur и без placeholders.
-3. `AURORA BLOG INTEGRATOR` — после Excalibur: встроить реальные статьи, covers, schema, WP posts, homepage blog block, `/blog/`, `single.php`.
+2. `AURORA PAGE BUILDER` — главная + до 4 внутренних страниц, blog slot по `11-blog-topics.md` или Excalibur meta, без написания статей и без placeholders.
+3. `AURORA BLOG INTEGRATOR` — в Phase 1 после Excalibur PASS: встроить реальные статьи, covers, schema, WP posts, homepage blog block, `/blog/`, `single.php`.
 
 Если prompt не содержит одного из этих режимов, Aurora обязана остановиться и попросить Директора перезапустить её в конкретном mode. Это защита от переполненного контекста и ложных отчётов.
 
@@ -56,6 +56,8 @@ teya-memory/wp/page-build-report.md
 ### `AURORA BLOG INTEGRATOR`
 
 Перед интеграцией блога обязаны существовать готовые Excalibur artifacts и post/cover handoff. Выход не должен менять базовую тему без причины.
+
+Aurora не имеет права писать substitute article bodies. Если нет Excalibur `article.html`, `article.meta.json`, `article-qa.md PASS`, covers и schema — остановиться со статусом `AURORA BLOG INTEGRATOR BLOCKER: missing Excalibur artifacts`.
 
 Запрещённые для Aurora режимы:
 
@@ -154,13 +156,14 @@ teya-memory/wp/page-build-report.md
 
 Блог обязателен:
 
-- homepage section “Блог”/“Материалы” с 3-6 темами из `11-blog-topics.md`;
+- homepage section “Блог”/“Материалы” с 3-6 темами из `11-blog-topics.md` или Excalibur `article.meta.json`;
 - `/blog/` archive route;
 - `home.php` или `page-blog.php`;
-- `single.php` для будущих статей;
+- `single.php` для Excalibur статей;
 - ссылка на блог в меню или футере.
 
 Нельзя делать blog placeholders: `скоро`, `готовится`, `пример`, `placeholder`, `lorem`.
+Нельзя писать статьи блога в Aurora Page Builder. `article.html`, longread body, BlogPosting/FAQ article schema, covers and article QA принадлежат только Excalibur. Если Excalibur deferred, показывай только topic cards без фальшивого excerpt/article body и явно укажи это в reports/handoff.
 
 ## Breadcrumbs
 

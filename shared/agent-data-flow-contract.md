@@ -8,6 +8,7 @@
 00-brief.md + site.inv
   -> teya-researcher (Исследование темы)
   -> core/yadryshko (Ядрышко: семантика и 11-blog-topics.md) || aura-designer (Дизайн и обложки блога)
+  -> excalibur (Phase 1 blog articles + covers; единственный владелец статей)
   -> aurora-team-lead (Проектирование структуры)
   -> aurora-team-* maps || aurora-team-asset-packager || aurora-team-motion (MOTION PLAN)
   -> aurora-team-artifact-auditor (input go/no-go)
@@ -15,8 +16,7 @@
   -> aurora-team-motion (MOTION IMPLEMENT)
   -> aurora-team-paint-evidence
   -> aurora-team-release-gate / teya_release_gate.py
-  -> excalibur (auto post-ready enrichment; non-blocking)
-  -> aurora: BLOG INTEGRATOR (only if Excalibur PASS; then repeat deploy/report/paint/release for enriched site)
+  -> aurora: BLOG INTEGRATOR (Phase 1, only if Excalibur PASS; then repeat deploy/report/paint/release for enriched site)
   -> aurora-team-design-guardian (Дизайн-контроль)
   -> aurora-team-qa (Финальная проверка)
 ```
@@ -77,7 +77,7 @@ teya-memory/design/AURA_BLOG_COVER_PROMPTS.json
 
 `AURA_BLOG_COVER_CONCEPT.*` — один primary `cover_family` из `blog-cover-family-registry.json` (33 типа); Excalibur меняет только scene per topic.
 
-## Excalibur → blog articles (фаза 2)
+## Excalibur → blog articles (Phase 1)
 
 ```text
 teya-memory/blog/excalibur-run-log.md
@@ -90,7 +90,7 @@ teya-memory/blog/articles/<topic_id>-<slug>/fact-check-report.json
 teya-memory/blog/articles/<topic_id>-<slug>/schema.jsonld
 teya-memory/blog/articles/<topic_id>-<slug>/promotion-checklist.md
 teya-memory/blog/articles/<topic_id>-<slug>/cover/cover.png
-teya-memory/blog/wp-publish-log.md                    # опц. 2b
+teya-memory/blog/wp-publish-log.md                    # Phase 1 publish/integration when deploy is available
 teya-memory/blog/articles/<topic_id>-<slug>/wp-publish-result.json
 llms.txt
 llms-full.txt
@@ -98,6 +98,8 @@ teya-memory/fragments/excalibur.md
 ```
 
 Scripts: `teya/scripts/excalibur_link_verify.py`, `teya/scripts/teya_excalibur_wp_publish.py`, `teya/scripts/teya_excalibur_fact_checker.py`, `teya/scripts/teya_excalibur_interlinker.py`, `teya/scripts/teya_excalibur_llms_generator.py`.
+
+Только Excalibur имеет право создавать `article.html`, longread excerpts, article schema, covers and article QA. `aurora-team-content`, `aurora-team-lead`, `aurora` and `AURORA PAGE BUILDER` may reference Excalibur metadata/cards, but must not write substitute blog articles.
 
 `AURA_VISUAL_INVENTORY.json` является мостом между дизайном и сборкой. Если он содержит required zones, они должны появиться в:
 
@@ -159,6 +161,7 @@ aurora-team-conversion
 aurora-team-security-release
 aurora-team-asset-packager
 aurora-team-motion
+excalibur
 ```
 
 Строго последовательно:
@@ -171,15 +174,14 @@ aurora-team-artifact-auditor
   -> aurora-team-wp-deploy-media
   -> aurora-team-paint-evidence
   -> aurora-team-release-gate
-  -> excalibur (non-blocking; may defer)
-  -> aurora: BLOG INTEGRATOR (only if Excalibur PASS)
+  -> aurora: BLOG INTEGRATOR (only if Phase 1 Excalibur PASS)
   -> aurora-team-design-guardian
   -> aurora-team-qa
 ```
 
 `AURORA THEME BASE` можно параллелить с `aurora-team-asset-packager`, если оба работают по read-only входам и не пишут один файл.
 
-Excalibur запускается автоматически после успешного release gate базового сайта. `EXCALIBUR DEFERRED` не блокирует Design Guardian / QA базового сайта; blog integration выполняется только при Excalibur PASS.
+Excalibur запускается в Phase 1 сразу после Core + AURA. `EXCALIBUR PHASE1 DEFERRED` не блокирует Design Guardian / QA базового сайта, но чужие article bodies запрещены; blog integration выполняется только при Excalibur PASS.
 
 ## Aurora Reports Передаются Design Guardian и QA
 

@@ -42,11 +42,20 @@ def build_manifest(
     seen_files: set[str] = set()
 
     for item in data.get("assets", []):
-        file_name = Path(item.get("planned_theme_path", "")).name
-        if not file_name:
+        raw_path = str(item.get("local_path") or item.get("planned_theme_path") or item.get("path") or "").replace("\\", "/")
+        if raw_path.startswith("assets/images/"):
+            file_name = raw_path[len("assets/images/") :]
+        elif raw_path.startswith("assets/"):
+            file_name = raw_path[len("assets/") :]
+            if file_name.startswith("images/"):
+                file_name = file_name[len("images/") :]
+        else:
+            file_name = raw_path
+        file_name = file_name.strip("/")
+        if not file_name or Path(file_name).is_absolute() or ".." in Path(file_name).parts:
             continue
         seen_files.add(file_name)
-        alt = (item.get("alt_text") or DEFAULT_ALT_BY_FILE.get(file_name) or "").strip()
+        alt = (item.get("alt_text") or DEFAULT_ALT_BY_FILE.get(Path(file_name).name) or "").strip()
         if not alt:
             raise RuntimeError(f"Missing alt_text for asset {item.get('id')} ({file_name})")
         local_path = theme_images_dir / file_name
@@ -56,6 +65,7 @@ def build_manifest(
                 raise RuntimeError(f"Invalid image asset {local_path}: {'; '.join(image_errors)}")
         assets.append(
             {
+                "id": item.get("id", Path(file_name).stem),
                 "registry_id": item.get("id", file_name),
                 "file": file_name,
                 "local_source_path": str(local_path).replace("\\", "/"),
@@ -68,11 +78,11 @@ def build_manifest(
         )
 
     for extra in extra_files or []:
-        file_name = extra.get("file", "")
-        if not file_name or file_name in seen_files:
+        file_name = str(extra.get("file", "")).replace("\\", "/").strip("/")
+        if not file_name or Path(file_name).is_absolute() or ".." in Path(file_name).parts or file_name in seen_files:
             continue
         seen_files.add(file_name)
-        alt = (extra.get("alt_text") or DEFAULT_ALT_BY_FILE.get(file_name) or "").strip()
+        alt = (extra.get("alt_text") or DEFAULT_ALT_BY_FILE.get(Path(file_name).name) or "").strip()
         if not alt:
             raise RuntimeError(f"Missing alt_text for extra file {file_name}")
         local_path = theme_images_dir / file_name
@@ -82,6 +92,7 @@ def build_manifest(
                 raise RuntimeError(f"Invalid image asset {local_path}: {'; '.join(image_errors)}")
         assets.append(
             {
+                "id": extra.get("registry_id", Path(file_name).stem),
                 "registry_id": extra.get("registry_id", Path(file_name).stem),
                 "file": file_name,
                 "local_source_path": str(local_path).replace("\\", "/"),
@@ -167,7 +178,7 @@ $teya_map = array(
 );
 foreach ( $teya_manifest['assets'] as $teya_asset ) {
 	$file = $teya_asset['file'] ?? '';
-	$registry_id = $teya_asset['registry_id'] ?? $file;
+	$registry_id = $teya_asset['registry_id'] ?? ( $teya_asset['id'] ?? $file );
 	$alt = $teya_asset['alt_text'] ?? '';
 	$path = $teya_theme_dir . '/assets/images/' . ltrim( $file, '/' );
 	$aid = teya_import_theme_image( $path, $registry_id, $alt );
@@ -178,6 +189,7 @@ foreach ( $teya_manifest['assets'] as $teya_asset ) {
 	}
 	$url = wp_get_attachment_url( $aid );
 	$teya_map['assets'][] = array(
+		'id'                => $registry_id,
 		'registry_id'       => $registry_id,
 		'file'              => $file,
 		'local_source_path' => 'teya-memory/wp/theme/' . $teya_map['theme_slug'] . '/assets/images/' . $file,
@@ -217,6 +229,9 @@ def write_wp_media_artifacts(
     theme_dir: Path | None = None,
 ) -> None:
     wp_dir.mkdir(parents=True, exist_ok=True)
+    if media_map.get("verdict") == "pass":
+        media_map.setdefault("transport_status", "pass")
+        media_map.setdefault("import_status", "pass")
     map_path = wp_dir / "wp-media-map.json"
     map_path.write_text(json.dumps(media_map, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 

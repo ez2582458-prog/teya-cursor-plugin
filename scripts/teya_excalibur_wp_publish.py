@@ -37,14 +37,11 @@ def cover_url_from_registry(registry_path: Path) -> str:
     if not registry_path.is_file():
         return ""
     registry = json.loads(registry_path.read_text(encoding="utf-8"))
-    return str(
-        registry.get("packaged_url")
-        or registry.get("attachment_url")
-        or registry.get("url")
-        or registry.get("cover_url")
-        or registry.get("image_url")
-        or ""
-    ).strip()
+    for key in ("transparent_url", "remote_packaged_url", "packaged_url", "attachment_url", "url", "cover_url", "image_url"):
+        value = str(registry.get(key) or "").strip()
+        if value.startswith(("http://", "https://")):
+            return value
+    return ""
 
 
 def normalize_cover_png(cover_path: Path, registry_path: Path) -> dict[str, object]:
@@ -59,7 +56,7 @@ def normalize_cover_png(cover_path: Path, registry_path: Path) -> dict[str, obje
         remote_url = cover_url_from_registry(registry_path)
         if not remote_url:
             raise RuntimeError("; ".join(errors) + "; no remote cover URL in cover-registry.json")
-        data, remote_evidence = download_url_bytes(remote_url, timeout=20, retries=5, chunk_size=16 * 1024)
+        data, remote_evidence = download_url_bytes(remote_url, timeout=20, retries=6, chunk_size=8 * 1024)
         detected = sniff_image_format(data)
         if not detected:
             raise RuntimeError("downloaded cover bytes are not a known image format")
@@ -130,11 +127,13 @@ def load_article(article_dir: Path) -> dict:
     cover_alt = meta.get("cover_alt") or meta.get("cover_alt_text") or ""
     if cover_reg.is_file():
         reg = json.loads(cover_reg.read_text(encoding="utf-8"))
-        cover_alt = cover_alt or reg.get("cover_alt_text", "")
+        cover_alt = cover_alt or reg.get("cover_alt_text", "") or reg.get("alt_text", "")
+    meta_ab = meta.get("meta_ab") or {}
     return {
         "slug": meta["slug"],
         "title": meta.get("title") or meta.get("h1", ""),
-        "excerpt": meta.get("description", ""),
+        "seo_title": meta_ab.get("title_seo", ""),
+        "excerpt": meta.get("description") or meta_ab.get("description_seo", ""),
         "content": content,
         "cover_b64": cover_b64,
         "cover_evidence": cover_evidence,
@@ -182,6 +181,7 @@ if (is_wp_error($post_id)) {{
 }}
 echo 'OK post=' . $post_id . ' slug=' . $slug . PHP_EOL;
 
+$att_id = 0;
 if (!empty($p['cover_b64'])) {{
     $bin = base64_decode($p['cover_b64']);
     $tmp = wp_tempnam('teya-cover-' . $slug . '.png');
@@ -208,10 +208,36 @@ if (!empty($p['cover_b64'])) {{
     @unlink($tmp);
 }}
 
+if (!empty($p['seo_title'])) {{
+    update_post_meta($post_id, '_teya_seo_title', sanitize_text_field($p['seo_title']));
+    echo 'OK seo_title=1' . PHP_EOL;
+}}
+
 if (!empty($p['schema_jsonld'])) {{
-    update_post_meta($post_id, '_teya_schema_jsonld', wp_slash($p['schema_jsonld']));
+    $schema_raw = $p['schema_jsonld'];
+    if (!empty($att_id) && !is_wp_error($att_id)) {{
+        $img_url = wp_get_attachment_url((int) $att_id);
+        if ($img_url) {{
+            $schema_raw = str_replace(
+                'https://mcp-kv.store/wp-content/uploads/blog/trendy-ai-igrushek-2026/cover.png',
+                $img_url,
+                $schema_raw
+            );
+            $schema_raw = preg_replace(
+                '#"url"\\s*:\\s*"https?://[^"]+/cover\\.png"#',
+                '"url": "' . esc_url_raw($img_url) . '"',
+                $schema_raw,
+                1
+            );
+        }}
+    }}
+    update_post_meta($post_id, '_teya_schema_jsonld', wp_slash($schema_raw));
     echo 'OK schema_meta=1' . PHP_EOL;
 }}
+
+update_option('permalink_structure', '/%postname%/');
+delete_option('rewrite_rules');
+echo 'OK permalink=/%postname%/' . PHP_EOL;
 
 $permalink = get_permalink($post_id);
 echo 'permalink=' . $permalink . PHP_EOL;
@@ -264,6 +290,9 @@ def main() -> int:
         return 0
 
     env = load_env(root)
+    if env.get("TEYA_ALLOW_PUBLISH", "").strip().lower() != "yes":
+        print("BLOCKER: TEYA_ALLOW_PUBLISH != yes", file=sys.stderr)
+        return 1
     public = args.public_base or env.get("PUBLIC_SITE_URL") or env.get("WP_HOME") or ""
     if not public:
         print("PUBLIC_SITE_URL or --public-base required", file=sys.stderr)

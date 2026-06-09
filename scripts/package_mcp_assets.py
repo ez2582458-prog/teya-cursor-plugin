@@ -7,6 +7,7 @@ agents do not invent ad-hoc downloaders that corrupt Range responses.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 from datetime import datetime, timezone
@@ -217,6 +218,7 @@ def main() -> int:
                 {
                     "status": "ok",
                     "bytes": len(local_bytes),
+                    "sha256": hashlib.sha256(local_bytes).hexdigest(),
                     "detected_format": local_format,
                     "width": width,
                     "height": height,
@@ -247,6 +249,7 @@ def main() -> int:
                     "expected_extension": dest.suffix.lower(),
                     "content_type": f"image/{'jpeg' if local_format == 'jpeg' else local_format}",
                     "bytes": len(local_bytes),
+                    "sha256": row["sha256"],
                     "width": width,
                     "height": height,
                     "download_method": "range_chunks_8192" if row["source"].startswith("range") else "existing_file",
@@ -260,6 +263,34 @@ def main() -> int:
             errors.append(f"{ident}: {exc}")
 
         rows.append(row)
+
+    hashes: dict[str, list[str]] = {}
+    for row in rows:
+        if row.get("status") == "ok" and row.get("sha256"):
+            hashes.setdefault(str(row["sha256"]), []).append(str(row.get("id") or ""))
+    for digest, ids in sorted(hashes.items()):
+        unique_ids = sorted(set(ids))
+        if len(unique_ids) > 1:
+            allowed = {
+                str(item.get("allow_duplicate_of") or "")
+                for item in assets
+                if asset_id(item) in unique_ids and item.get("allow_duplicate_of")
+            }
+            if not allowed:
+                for row in rows:
+                    if row.get("id") in unique_ids:
+                        row["status"] = "blocker"
+                        row["error"] = "duplicate bytes with another distinct asset id"
+                for item in assets:
+                    if asset_id(item) in unique_ids:
+                        item["status"] = "blocker"
+                        item["decode_verified"] = False
+                for media_item in media_assets:
+                    if media_item.get("id") in unique_ids or media_item.get("registry_id") in unique_ids:
+                        media_item["status"] = "blocker"
+                        media_item["decode_verified"] = False
+                        media_item["duplicate_asset_blocker"] = True
+                errors.append(f"duplicate asset bytes detected for distinct ids {unique_ids}: sha256={digest}")
 
     packaged_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     ready_count = sum(1 for row in rows if row.get("status") == "ok")

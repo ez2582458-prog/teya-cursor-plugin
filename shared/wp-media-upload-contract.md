@@ -109,13 +109,19 @@ function teya_get_media_map() {
 
 function teya_media_img($registry_id, $attrs = []) {
     foreach (teya_get_media_map() as $item) {
-        if (($item['registry_id'] ?? '') !== $registry_id) {
+        $item_id = $item['id'] ?? ($item['registry_id'] ?? '');
+        if ($item_id !== $registry_id && ($item['registry_id'] ?? '') !== $registry_id) {
             continue;
         }
         $id = (int) ($item['attachment_id'] ?? 0);
         if ($id > 0) {
             $attrs['alt'] = $attrs['alt'] ?? ($item['alt_text'] ?? '');
             return wp_get_attachment_image($id, 'full', false, $attrs);
+        }
+        if (! empty($item['attachment_url'])) {
+            $alt = esc_attr($attrs['alt'] ?? ($item['alt_text'] ?? ''));
+            $class = isset($attrs['class']) ? ' class="' . esc_attr($attrs['class']) . '"' : '';
+            return '<img src="' . esc_url($item['attachment_url']) . '" alt="' . $alt . '"' . $class . '>';
         }
     }
     return '';
@@ -132,6 +138,7 @@ function teya_media_img($registry_id, $attrs = []) {
 
 - public HTML содержит `tempfile.aiquickdraw.com`, MCP URL или другой remote asset URL вместо WP uploads;
 - `wp-media-map.json` отсутствует после deploy;
+- `media-map.json`/`wp-media-map.json` не содержат одновременно `id` и `registry_id` для каждого asset;
 - `attachment_id` отсутствует для required asset;
 - `alt_text` пустой или generic для meaningful image;
 - attachment alt meta не совпадает с registry/content pack;

@@ -118,15 +118,16 @@ Fragment merge safety:
 - Если fragment уже есть в `01-handoff.md`, не вставляй повторно.
 - После каждого parallel batch пиши короткий visible progress marker в handoff (`MERGE OK`, `WAITING FOR ...`, `BLOCKED: ...`), чтобы Директор не выглядел зависшим.
 
-### 4.1. Blog Slot Planning (без Excalibur)
+### 4.1. Excalibur Phase 1 Blog
 
-После того как Ядрышко создало `11-blog-topics.md`, а AURA создала дизайн-концепт, Директор **не запускает Excalibur**. На этом этапе разрешены только:
+После того как Ядрышко создало `11-blog-topics.md`, а AURA создала дизайн-концепт, Директор запускает **Task**(`excalibur`) в Phase 1. На этом этапе обязательно:
 
 1. Проверить, что AURA подготовила `AURA_BLOG_COVER_CONCEPT.*`, `AURA_BLOG_COVER_SYSTEM.md` и skeleton `AURA_BLOG_COVER_PROMPTS.json`.
-2. Передать Aurora Team Lead темы из `11-blog-topics.md` как будущий blog slot: homepage section, `/blog/`, `single.php`, места для карточек, schema/linking requirements.
-3. Запретить blog placeholders `скоро`, `готовится`, `placeholder`, `lorem`. Если статей ещё нет, Aurora делает структурный blog slot и карточки по темам, но не пишет “статья готовится”.
+2. Запустить Excalibur для всех тем `priority: P0` / `Phase 1 (Excalibur)` из `11-blog-topics.md` (если P0 одна — закрыть одну), covers, schema, QA и publish handoff.
+3. Передать Aurora Team Lead темы из `11-blog-topics.md` и Excalibur status как blog slot contract: homepage section, `/blog/`, `single.php`, места для карточек, schema/linking requirements.
+4. Запретить blog placeholders `скоро`, `готовится`, `placeholder`, `lorem`. Если Excalibur deferred, Aurora делает только topic cards без article body/fake excerpt.
 
-Excalibur article writing запускается только после базовой готовности сайта и Aurora split build. Причина: Excalibur отвечает за наполнение blog block уже в контексте готового сайта, а не за раннюю структуру/дизайн/WP.
+Статьи блога не пишет никто кроме Excalibur. Phase 2 используется только как ручной repair/re-run.
 
 ### 5. Aurora Team Lead
 
@@ -276,7 +277,7 @@ python teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>
 
 Если команда возвращает ненулевой код, запрещено принимать `published_and_configured`, `✅ DESIGN OK`, `✅ QA OK` или финальный `готово`. Директор останавливает pipeline со статусом `❌ RELEASE BLOCKER`, вставляет вывод gate в `teya-memory/wp/release-gate-report.md` и возвращает Aurora/Aurora Team на исправление конкретных пунктов. Markdown/JSON self-report без успешного `teya_release_gate.py` не является доказательством.
 
-Если Aurora split build и Excalibur article stage прошли успешно, `teya_release_gate.py` вернул код 0, доступы в `teya.env.local` заполнены, `allow_publish = yes` и статьи блога готовы после этапа `Excalibur после базовой готовности сайта`, Директор запускает публикацию/интеграцию статей в WordPress:
+Если Aurora split build и Phase 1 Excalibur article stage прошли успешно, `teya_release_gate.py` вернул код 0, доступы в `teya.env.local` заполнены, `allow_publish = yes` и статьи блога уже готовы в `teya-memory/blog/articles/`, Директор запускает публикацию/интеграцию статей в WordPress:
 
 1. **Task**(`excalibur`) с фазой публикации в WordPress:
    «Следуй skill `excalibur-wp-publish`. Прочитай `teya/shared/excalibur-wp-publish-contract.md` и готовые статьи в `teya-memory/blog/articles/`. С помощью скрипта `teya_excalibur_wp_publish.py` опубликуй все написанные статьи в базу данных WordPress, загрузи сгенерированные обложки как featured images и пропиши Schema JSON-LD разметку в метаданные постов. Запиши результат во `wp-publish-result.json` в каждой статье и обнови `teya-memory/blog/wp-publish-log.md`. Запиши fragment `fragments/excalibur-publish.md` с маркером `=== EXCALIBUR-PUBLISH (ПУБЛИКАЦИЯ В WP) ===`.»
@@ -315,16 +316,16 @@ python teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>
 
 Выдай пользователю: публичный URL, что создано, QA статус, ограничения.
 
-### 11. Фаза 2 — Excalibur (блог, по запросу)
+### 11. Excalibur Blog Repair (только ручной повтор)
 
-После фазы 1 или когда есть `11-blog-topics.md` + `AURA_BLOG_COVER_CONCEPT.json`. Команда: `/teya-phase2-excalibur`.
+Excalibur должен запускаться в Phase 1 сразу после Core + AURA. Этот блок использовать только для ручного ремонта/дописывания, если Phase 1 Excalibur был deferred.
 
 1. Проверь `11-blog-topics.md`, `AURA_BLOG_COVER_CONCEPT.md`, `.json`, research/fact-bank.
 2. **Task**(`aura-designer`) — blog covers: per-topic `topic_scene_descriptor` в `AURA_BLOG_COVER_PROMPTS.json`, style anchor опционально; `blog-cover-brand-concept.md` + `blog-cover-mcp-contract.md`.
 3. Проверь: `cover_family` из реестра (`blog-cover-family-registry.json`), у каждой темы `topic_scene_descriptor`, `cover_alt_text`, prefix+scene+suffix или `gpt_image_2_prompt`.
 4. **Task**(`excalibur`) — статьи + MCP covers **по концепту** (prefix+scene+suffix).
 5. Проверь `excalibur-run-log.md`, articles/, `link-verify.json`, `promotion-checklist.md`, cover, fragment.
-6. (Опц.) Фаза 2b — `excalibur-wp-publish` если `publish: yes` и `allow_publish=yes`.
+6. `excalibur-wp-publish` — Phase 1 publish repair step, если `publish: yes` и `allow_publish=yes`.
 
 **Task**(`aura-designer`) blog covers:
 

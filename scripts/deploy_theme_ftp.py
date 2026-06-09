@@ -104,6 +104,14 @@ def main() -> int:
     theme_local = root / "teya-memory" / "wp" / "theme" / args.theme_slug
     ignore = {".git", "node_modules", ".DS_Store", ".deployignore"}
 
+    if env.get("TEYA_ALLOW_PUBLISH", "").strip().lower() != "yes":
+        print("BLOCKER: TEYA_ALLOW_PUBLISH != yes")
+        return 1
+
+    if not theme_local.is_dir():
+        print(f"BLOCKER: theme not found: {theme_local}")
+        return 1
+
     image_errors = validate_theme_images(theme_local)
     if image_errors:
         print("ASSET_VERIFY_BLOCKER: theme contains invalid image files")

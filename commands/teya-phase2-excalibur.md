@@ -1,8 +1,10 @@
 ---
-description: Teya фаза 2 — AURA blog cover brand concept + Excalibur SEO/GEO статьи.
+description: Teya Excalibur repair/rerun — ручной повтор статей/обложек, если Phase 1 Excalibur был deferred.
 ---
 
-# Teya — фаза 2 (Excalibur)
+# Teya — Excalibur Repair/Rerun
+
+Это не основной путь. В нормальном прогоне Excalibur пишет статьи и готовит covers в Phase 1 сразу после Core + AURA. Используй эту команду только для ручного ремонта, дописывания или повторной публикации.
 
 **Prerequisites:** research + `11-blog-topics.md` + `AURA_BLOG_COVER_CONCEPT.json`.
 
@@ -17,7 +19,7 @@ description: Teya фаза 2 — AURA blog cover brand concept + Excalibur SEO/G
    - см. `teya/shared/blog-cover-brand-concept.md`
 3. **Task(excalibur)** — статьи + MCP covers: **prefix + scene + suffix**, не freestyle.
 4. Проверь: research-notes, article-qa, link-verify, schema, promotion-checklist, cover.
-5. (Опц.) **Фаза 2b** — `commands/teya-phase2-excalibur-publish.md` + skill `excalibur-wp-publish`.
+5. Publish repair — `commands/teya-phase2-excalibur-publish.md` + skill `excalibur-wp-publish`, если Phase 1 publish был deferred.
 
 **Передай:** `topic_id` (`B01`…`B06`, `all`, `P0-only`), `publish: yes/no`.
 

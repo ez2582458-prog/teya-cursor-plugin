@@ -95,7 +95,7 @@ teya-memory/fragments/aurora-team-qa.md
 - Контент: H1 один, Title/Description есть, объём не thin, FAQ видимы, обязательные блоки есть.
 - Anti-haltura: нет `пример отзыва`, `пример участника`, `в разработке`, `скоро`, `TODO`, `placeholder`, `lorem`, `заглушка` в публичном HTML.
 - Breadcrumbs: нет видимых верхних крошек, которые перекрывают меню/hero/CTA; BreadcrumbList допускается как JSON-LD.
-- Blog: главная содержит реальный раздел “Блог”/“Материалы” с темами из `11-blog-topics.md`, `/blog/` route/template существует, `single.php` готов для будущих статей.
+- Blog: главная содержит реальный раздел “Блог”/“Материалы” с темами из `11-blog-topics.md` или Excalibur meta, `/blog/` route/template существует, `single.php` готов для Excalibur статей; нет substitute article bodies от Aurora/Aurora Team.
 - Меню: primary/footer есть, CTA есть, legal links на “Политика конфиденциальности” и “Политика cookies” обязательны.
 - Перелинковка: 3-8 contextual links per SEO page, no orphan pages.
 - Schema: JSON-LD валиден по смыслу, не содержит выдуманных рейтингов/цен/адресов.

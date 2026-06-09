@@ -6,6 +6,7 @@ import base64
 import ftplib
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -72,6 +73,8 @@ def extract_section(pack: str, start_marker: str, end_markers: list[str]) -> str
 
 
 def blog_posts() -> list[dict]:
+    if os.environ.get("TEYA_ALLOW_LEGACY_BLOG_PUBLISH") != "yes":
+        return []
     pack = PACK.read_text(encoding="utf-8")
     specs = [
         {
@@ -282,6 +285,10 @@ def upload_and_run_php(env: dict, php: str, remote_name: str) -> str:
 
 def main() -> int:
     env = load_env()
+    if env.get("TEYA_ALLOW_PUBLISH", "").lower() != "yes":
+        print("BLOCKER: TEYA_ALLOW_PUBLISH != yes")
+        return 1
+
     print("=== FTP theme upload ===")
     if deploy_ftp_theme(env) != 0:
         return 1

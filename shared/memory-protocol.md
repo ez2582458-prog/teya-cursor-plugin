@@ -89,7 +89,7 @@ teya-memory/
 │   └── ...
 ├── blog/                       # Excalibur: SEO/GEO статьи + covers
 │   ├── excalibur-run-log.md
-│   ├── wp-publish-log.md            # опц. фаза 2b
+│   ├── wp-publish-log.md            # Phase 1 publish/integration log if deploy is available
 │   └── articles/<topic_id>-<slug>/
 │       ├── research-notes.md
 │       ├── article.html
@@ -102,7 +102,7 @@ teya-memory/
 │       ├── cannibalization-report.json
 │       ├── schema.jsonld
 │       ├── promotion-checklist.md
-│       ├── wp-publish-result.json   # опц. фаза 2b
+│       ├── wp-publish-result.json   # Phase 1 publish result if deploy is available
 │       └── cover/cover.png
 └── wp/                         # Aurora Team + Aurora
     ├── aurora-team-blueprint.md

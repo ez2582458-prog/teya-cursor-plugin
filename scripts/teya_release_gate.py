@@ -8,6 +8,7 @@ and paint evidence agree with each other.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import re
@@ -95,7 +96,7 @@ def read_json(path: Path, errors: list[str]) -> dict[str, Any]:
         errors.append(f"missing required json: {path}")
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as exc:
         errors.append(f"invalid json {path}: {exc}")
         return {}
@@ -264,6 +265,32 @@ def check_split_reports(wp_dir: Path, build_report: dict[str, Any], errors: list
             errors.append(f"final Aurora reports without split report: teya-memory/wp/{file_name}")
 
 
+def check_report_identity(wp_dir: Path, theme_slug: str, errors: list[str]) -> None:
+    if not theme_slug:
+        return
+
+    report_names = (
+        "theme-base-report.md",
+        "asset-packaging-report.md",
+        "asset-transport-report.md",
+        "page-build-report.md",
+        "artifact-readiness-report.md",
+        "release-gate-report.md",
+        "design-integrity-report.md",
+        "seo-geo-verification.md",
+    )
+    slug_pattern = re.compile(r"\bteya-[a-z0-9][a-z0-9-]+\b")
+    for name in report_names:
+        path = wp_dir / name
+        if not path.is_file():
+            continue
+        text = read_text(path)
+        slugs = sorted(set(slug_pattern.findall(text)))
+        stale_slugs = [slug for slug in slugs if slug not in {theme_slug, "teya-memory"}]
+        if stale_slugs and theme_slug not in slugs:
+            errors.append(f"stale report identity in teya-memory/wp/{name}: found {stale_slugs}, expected {theme_slug}")
+
+
 def check_media_maps(project_root: Path, wp_dir: Path, theme_dir: Path, errors: list[str]) -> None:
     wp_media_map = read_json(wp_dir / "wp-media-map.json", errors)
     theme_media_map = read_json(theme_dir / "media-map.json", errors)
@@ -277,21 +304,29 @@ def check_media_maps(project_root: Path, wp_dir: Path, theme_dir: Path, errors: 
             continue
 
         for item in assets:
-            registry_id = str(item.get("registry_id") or "").strip()
+            registry_id = str(item.get("registry_id") or item.get("id") or "").strip()
+            asset_id = str(item.get("id") or item.get("registry_id") or "").strip()
             file_name = str(item.get("file") or item.get("path") or "").strip()
             local_source = str(item.get("local_source_path") or "").strip()
             attachment_url = str(item.get("attachment_url") or "").strip()
             alt_text = str(item.get("alt_text") or item.get("alt") or "").strip()
 
             if not registry_id:
-                errors.append(f"{label}: asset without registry_id")
+                errors.append(f"{label}: asset without id/registry_id")
+            if registry_id and asset_id and registry_id != asset_id:
+                errors.append(f"{label}: id/registry_id mismatch for {registry_id}: id={asset_id}")
             if not file_name:
                 errors.append(f"{label}: {registry_id} has no file")
             if not alt_text or alt_text.lower() in {"image", "photo", "placeholder", "asset"}:
                 errors.append(f"{label}: {registry_id} has missing/generic alt_text")
 
-            if local_source and not resolve_local_path(project_root, local_source).is_file():
-                errors.append(f"{label}: local_source_path missing for {registry_id}: {local_source}")
+            if local_source:
+                resolved_source = resolve_local_path(project_root, local_source)
+                if not resolved_source.is_file():
+                    errors.append(f"{label}: local_source_path missing for {registry_id}: {local_source}")
+                elif resolved_source.suffix.lower() in IMAGE_EXTENSIONS:
+                    errors.extend(f"{label}: {registry_id}: {error}" for error in validate_image_file(resolved_source))
+                    item["_resolved_asset_path"] = str(resolved_source)
             elif file_name:
                 relative = Path(file_name)
                 candidate = theme_dir / relative if str(file_name).replace("\\", "/").startswith("assets/") else theme_dir / "assets" / "images" / relative
@@ -299,6 +334,7 @@ def check_media_maps(project_root: Path, wp_dir: Path, theme_dir: Path, errors: 
                     errors.append(f"{label}: theme asset file missing for {registry_id}: {candidate.relative_to(theme_dir)}")
                 elif candidate.suffix.lower() in IMAGE_EXTENSIONS:
                     errors.extend(f"{label}: {registry_id}: {error}" for error in validate_image_file(candidate))
+                    item["_resolved_asset_path"] = str(candidate)
 
             if attachment_url:
                 parsed = urllib.parse.urlparse(attachment_url)
@@ -310,6 +346,22 @@ def check_media_maps(project_root: Path, wp_dir: Path, theme_dir: Path, errors: 
 
     if wp_media_map.get("import_status") == "pending":
         errors.append("wp-media-map.json import_status is pending; WP Media import is not complete")
+
+    for label, media_map in (("wp-media-map.json", wp_media_map), ("theme media-map.json", theme_media_map)):
+        hashes: dict[str, list[str]] = {}
+        for item in normalize_assets(media_map):
+            registry_id = str(item.get("registry_id") or item.get("id") or "").strip()
+            raw_path = str(item.get("_resolved_asset_path") or "").strip()
+            if not registry_id or not raw_path:
+                continue
+            path = Path(raw_path)
+            if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS:
+                digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                hashes.setdefault(digest, []).append(registry_id)
+        for digest, ids in hashes.items():
+            unique_ids = sorted(set(ids))
+            if len(unique_ids) > 1:
+                errors.append(f"{label}: duplicate image bytes for distinct assets {unique_ids}: sha256={digest}")
 
 
 def check_aura_asset_registry(project_root: Path, errors: list[str]) -> None:
@@ -342,11 +394,44 @@ def check_aura_asset_registry(project_root: Path, errors: list[str]) -> None:
                 errors.append(f"AURA asset {asset_id}: background_removal_status is not ready")
             if not packaged_url:
                 errors.append(f"AURA asset {asset_id}: packaged_url is empty")
-            if transparent_url and packaged_url and packaged_url != transparent_url:
+            if transparent_url and packaged_url.startswith(("http://", "https://")) and packaged_url != transparent_url:
                 errors.append(f"AURA asset {asset_id}: packaged_url must equal transparent_url for cutout assets")
+            if packaged_url and not packaged_url.startswith(("http://", "https://")) and not packaged_url.startswith("assets/"):
+                errors.append(f"AURA asset {asset_id}: local packaged_url must start with assets/: {packaged_url}")
 
         if item.get("status") == "ready" and requires_bg and not transparent_url:
             errors.append(f"AURA asset {asset_id}: status ready contradicts missing transparent_url")
+
+
+def check_excalibur_blog_ownership(project_root: Path, wp_dir: Path, errors: list[str]) -> None:
+    blog_dir = project_root / "teya-memory" / "blog"
+    articles_dir = blog_dir / "articles"
+    fragment = project_root / "teya-memory" / "fragments" / "excalibur.md"
+    run_log = blog_dir / "excalibur-run-log.md"
+
+    article_dirs = [path for path in articles_dir.iterdir() if path.is_dir()] if articles_dir.is_dir() else []
+    article_like_reports = ""
+    for name in ("page-content-pack.md", "page-build-report.md", "content-completeness-report.md", "build-report.json"):
+        path = wp_dir / name
+        if path.is_file():
+            article_like_reports += "\n" + read_text(path)
+
+    claims_articles = bool(re.search(r"\b(article\.html|BlogPosting|wp-publish-result|article-qa\.md)\b", article_like_reports))
+    if claims_articles and not article_dirs:
+        errors.append("reports claim blog articles/schema, but teya-memory/blog/articles has no Excalibur article dirs")
+
+    if article_dirs and not fragment.is_file():
+        errors.append("blog articles exist without teya-memory/fragments/excalibur.md; articles must be owned by Excalibur")
+    if article_dirs and not run_log.is_file():
+        errors.append("blog articles exist without teya-memory/blog/excalibur-run-log.md")
+
+    for article_dir in article_dirs:
+        for required in ("article.html", "article.meta.json", "article-qa.md", "schema.jsonld"):
+            if not (article_dir / required).is_file():
+                errors.append(f"Excalibur article missing {required}: {article_dir.relative_to(project_root)}")
+        qa_text = read_text(article_dir / "article-qa.md")
+        if qa_text and "PASS" not in qa_text.upper() and "✅" not in qa_text:
+            errors.append(f"Excalibur article QA is not PASS: {article_dir.relative_to(project_root)}")
 
 
 def css_urls(css: str) -> list[str]:
@@ -544,7 +629,9 @@ def main() -> int:
 
     check_report_consistency(site_spec, build_report, errors)
     check_split_reports(wp_dir, build_report, errors)
+    check_report_identity(wp_dir, theme_slug, errors)
     check_aura_asset_registry(project_root, errors)
+    check_excalibur_blog_ownership(project_root, wp_dir, errors)
     check_https_canonical(wp_dir, public_url, errors)
 
     if theme_dir.is_dir():

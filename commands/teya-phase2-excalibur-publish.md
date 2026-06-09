@@ -1,8 +1,10 @@
 ---
-description: Teya фаза 2b — публикация Excalibur статьи в WordPress.
+description: Teya Excalibur publish repair — публикация Phase 1 статьи Excalibur в WordPress.
 ---
 
-# Teya — фаза 2b (Excalibur WP Publish)
+# Teya — Excalibur WP Publish Repair
+
+Это repair-команда. В нормальном прогоне публикация Excalibur articles выполняется в Phase 1 после готового deploy context.
 
 **Prerequisites:** `✅ ARTICLE OK`, `article-qa.md` PASS, `link-verify.json` pass, `cover/cover.png`, `site.inv` + `allow_publish=yes`.
 

@@ -92,17 +92,18 @@ python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT> --keep-se
    - `teya-memory/design/AURA_BLOG_COVER_SYSTEM.md`
    - `teya-memory/design/AURA_BLOG_COVER_PROMPTS.json`
 7. Если одного маркера или файла нет — дозапустить только отсутствующего агента
-8. **Blog slot planning без Excalibur:**
-   - На этом этапе Excalibur НЕ запускается.
-   - AURA фиксирует только blog cover system/concept, а Aurora Team Lead проектирует `/blog/`, homepage blog slot и `single.php` по темам из `11-blog-topics.md`.
-   - Excalibur запускается позже, после базовой готовности сайта, чтобы наполнять уже спроектированный blog block.
+8. **Excalibur в Phase 1, сразу после Core + AURA:**
+   - Директор запускает **Task**(`excalibur`) сразу после появления `11-blog-topics.md`, research/fact-bank и `AURA_BLOG_COVER_CONCEPT.*`.
+   - Только Excalibur пишет финальные blog article bodies, `article.html`, longread excerpts, BlogPosting/FAQ schema, covers и publish handoff. Aurora, Aurora Team Content, Aurora Team Lead и Page Builder не пишут “статьи блога” и не создают фейковые 6 статей.
+   - Excalibur обязан закрыть все темы `priority: P0` / `Phase 1 (Excalibur)` из `11-blog-topics.md` в `teya-memory/blog/articles/` + `teya-memory/fragments/excalibur.md`. Если P0 всего одна — одна статья PASS является корректным Phase 1 результатом. Если Excalibur получил blocker, записать `EXCALIBUR PHASE1 BLOCKER/DEFERRED`, но не заменять его статьи другим агентом.
+   - AURA фиксирует blog cover system/concept, а Aurora Team Lead проектирует `/blog/`, homepage blog slot и `single.php` так, чтобы использовать Excalibur artifacts при PASS.
 9. **Task**(`aurora-team-lead`) — blueprint всей структуры сайта, включая обязательный `/blog/`, blog section на главной, no-visible-top-breadcrumbs policy, source decomposition, per-page visual budget, per-page section blueprints, visual inventory requirements, section transitions и required assets. Он не запускает subagents.
 10. **Параллельно**: **Task**(`aurora-team-content`) + **Task**(`aurora-team-navigation`) + **Task**(`aurora-team-schema`) + **Task**(`aurora-team-indexing`) + **Task**(`aurora-team-local-entity`) + **Task**(`aurora-team-performance-a11y`) + **Task**(`aurora-team-conversion`) + **Task**(`aurora-team-security-release`) + **Task**(`aurora-team-asset-packager`) + **Task**(`aurora-team-motion`) mode `MOTION PLAN`. Teya default motion contract: GSAP + meaningful Three.js/WebGL/canvas wow-scene, unless user explicitly forbids 3D or performance/a11y map blocks it.
 11. Проверить `page-content-pack.md`, `navigation-linking-map.md`, `schema-technical-seo-map.md`, `indexing-crawl-map.md`, `local-entity-map.md`, `performance-accessibility-map.md`, `conversion-tracking-map.md`, `security-release-map.md`, `asset-packaging-report.md`, `animation-motion-map.md`, theme `media-map.json` и реальные files в `theme/<theme-slug>/assets/images/`. Реальный raster asset = file exists + byte signature matches extension + Pillow `verify()`/`load()` OK + `decode_verified: true` в `asset-packaging-report.md`; `.png` URL/content-type от MCP не считается доказательством PNG. Если `page-content-pack.md` не содержит готовых текстов, block inventory и минимумов из `quality-anti-haltura.md`, дозапустить `aurora-team-content`. Если asset packaging blocker, нет fragment, нет файлов или есть binary/decode mismatch — не запускать Page Builder. Если motion map missing/blocker — дозапустить `aurora-team-motion` mode `MOTION PLAN`.
 12. **Task**(`aurora-team-artifact-auditor`) — сверить входы и записать `artifact-readiness-report.md`. Если `BLOCKED`, дозапустить только недостающий agent/map. До `READY` нельзя писать `AURORA (WP + DEPLOY) — in progress`.
 13. **Aurora split build, без монолитного “сделай всё”:**
    - **Task**(`aurora`) mode `AURORA THEME BASE`: каркас темы, tokens, components, header/footer, legal/cookie/menu contracts.
-   - **Task**(`aurora`) mode `AURORA PAGE BUILDER`: только после `theme-base-report.md` + `asset-packaging-report.md` с `decode_verified: true` для raster assets + `animation-motion-map.md` + `artifact-readiness-report.md READY` + theme `media-map.json` + реальных local assets. Главная + до 4 внутренних страниц, blog slot без Excalibur articles, без placeholders. Aurora обязана сохранить hooks/classes/data attributes из motion map.
+   - **Task**(`aurora`) mode `AURORA PAGE BUILDER`: только после `theme-base-report.md` + `asset-packaging-report.md` с `decode_verified: true` для raster assets + `animation-motion-map.md` + `artifact-readiness-report.md READY` + theme `media-map.json` + реальных local assets. Главная + до 4 внутренних страниц. Blog slot использует Excalibur `article.meta.json`/covers при PASS; если Excalibur ещё deferred, разрешены только topic cards из `11-blog-topics.md` без article body, fake excerpt, `article.html` или “готовится/placeholder”. Aurora обязана сохранить hooks/classes/data attributes из motion map.
 14. **Task**(`aurora-team-motion`) mode `MOTION IMPLEMENT` — после Page Builder и до deploy/media: внедрить GSAP/Three.js/CSS animations в тему, записать `animation-implementation-report.md`, fragment. Если `threejs_scene_status: not_used` без явного запрета/блокера, это `MOTION THREEJS BLOCKER`. Если dynamic imports из `main.js` не существуют локально, это `MOTION DEPLOY BLOCKER`. Если любой `MOTION BLOCKER`, не деплоить.
 15. **Task**(`aurora-team-wp-deploy-media`) — единый владелец asset transport + deploy + WP Media import: сначала `asset_transport.py` и `asset-transport-report.md`, затем FTP/SFTP deploy, затем WP Media import, `wp-media-map.json`, `wp-media-import-log.md`, `deploy-log.md`.
     - Перед FTP/SFTP upload агент обязан запустить `python teya/scripts/asset_transport.py --project-root <PROJECT_ROOT> --theme-slug <theme-slug>`.
@@ -118,19 +119,18 @@ python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT> --keep-se
 17. **Task**(`aurora-team-paint-evidence`) — собрать browser screenshots/network/computed styles в `paint-qa/`, включая animation evidence: no console errors, no missing GSAP/Three.js assets, reduced-motion branch reachable.
 18. **Hard Release Gate — readiness базового сайта:** **Task**(`aurora-team-release-gate`) выполняет `python teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>`.
    - Если gate вернул ненулевой код, ставить `❌ RELEASE BLOCKER`, записать вывод в `teya-memory/wp/release-gate-report.md` и не запускать Design Guardian / QA.
-19. **Task**(`excalibur`) auto enrichment после readiness — если release gate базового сайта прошёл, Директор автоматически запускает Excalibur для реальных статей и blog covers под готовый сайт/визуальную систему. Excalibur не является hard blocker: при сбое записать `EXCALIBUR DEFERRED` в `teya-memory/blog/excalibur-run-log.md` и fragment, затем продолжить Design Guardian/QA базового сайта.
-20. **Task**(`aurora`) mode `AURORA BLOG INTEGRATOR` — запускать только если Excalibur PASS и есть готовые article artifacts/covers/schema. После успешной интеграции повторить deploy/media → report compiler → paint evidence → release gate для enriched-сайта. Если интеграция падает, записать `BLOG ENRICHMENT DEFERRED` и продолжить QA базового сайта.
+19. **Phase 1 blog publication/integration:** если Excalibur PASS и есть готовые `article.html`, `article.meta.json`, `article-qa.md PASS`, covers и schema, Директор запускает **Task**(`aurora`) mode `AURORA BLOG INTEGRATOR` в Phase 1. Интегратор публикует/встраивает Excalibur articles в homepage blog block, `/blog/`, `single.php` и WP posts/covers/schema по deploy context. После интеграции повторить deploy/media → report compiler → paint evidence → release gate. Если интеграция падает, записать `BLOG INTEGRATION BLOCKER/DEFERRED`; не поручать статьи Aurora.
+20. Если Excalibur Phase 1 deferred, Design Guardian/QA базового сайта можно продолжить только с явным handoff `EXCALIBUR PHASE1 DEFERRED`; blog section не должен содержать чужие article bodies.
 21. **Task**(`aurora-team-design-guardian`) — обязательный дизайн-gate: AURA match, source decomposition, per-page visual budget, per-page section blueprints, готовое browser paint evidence, screenshots 1440/375 по главной и каждой selected/build page, реальные screenshot files, browser network with theme CSS/JS/images/animation deps, no unstyled/default HTML paint, computed styles, token drift, visual coherence, visual inventory density, section transitions, motion map implementation, local asset files, MCP asset fidelity, responsive 375/768/1440, no visible top breadcrumbs, homepage blog section. Запускать только если нет `❌ CONTENT BLOCKER` и release gate прошёл. `EXCALIBUR DEFERRED` не блокирует дизайн-gate базового сайта.
 22. **Task**(`aurora-team-qa`) — финальная проверка SEO/GEO, research/fact bank, data-flow fields, per-page paint evidence, screenshot files, browser subresources, no unstyled paint, local assets, WP media import + alt, animation reduced-motion/performance evidence, report identity, visual inventory, блога, меню, футера, перелинковки, schema, WP и live/deploy только после no content blocker + design OK + paint evidence pass + release gate code 0. Excalibur deferred не блокирует QA базового сайта, но должен быть явно указан в финальном handoff.
 
-### Фаза 2 — Excalibur (опциональный ручной перезапуск)
+### Фаза 2 — Excalibur (только ручной повтор/ремонт)
 
-Команда: `commands/teya-phase2-excalibur.md`. Prerequisites: `11-blog-topics.md`, `AURA_BLOG_COVER_CONCEPT.json`.
+Команда: `commands/teya-phase2-excalibur.md` — legacy/manual rerun для ремонта или дописывания статей после Phase 1, не основной путь.
 
-1. **Task**(`aura-designer`) — blog covers: фирменный конcept + per-topic scenes (`blog-cover-brand-concept.md`, `blog-cover-family-registry.json` — 33 типа).
-2. **Task**(`excalibur`) — статьи + MCP covers (prefix+scene+suffix из concept).
-3. Проверь `teya-memory/blog/`, fragment `=== EXCALIBUR (SEO/GEO СТАТЬИ БЛОГА) ===`.
-4. (Опц.) Фаза 2b — `excalibur-wp-publish` + `teya-phase2-excalibur-publish.md`.
+1. Не использовать Phase 2 как причину пропустить Excalibur в Phase 1.
+2. Не создавать статьи другими агентами.
+3. Если нужен repair, запускать только `excalibur` / `excalibur-wp-publish` по существующим artifacts.
 
 ### Cloud Task fallback
 
@@ -149,7 +149,8 @@ python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT> --keep-se
 - НЕ переходить к Aurora без маркеров Ядрышко и AURA, `11-blog-topics.md`, `AURA_PAGE_PLAN.md`, `AURA_SOURCE_DECOMPOSITION.json`, `AURA_VISUAL_BUDGET.json`, `AURA_SECTION_BLUEPRINTS.json`, `AURA_VISUAL_INVENTORY.json`, `AURA_SECTION_TRANSITIONS.json`, `AURA_STYLE_MATCH_SCORECARD.md`, `AURA_SHAPE_MAP.json`, `AURA_ASSET_REGISTRY.json` и AURA visual gates
 - НЕ просить Aurora или Aurora Team Lead запускать nested subagents; все Task запускает только Директор
 - НЕ переходить к Aurora Page Builder без `aurora-team-blueprint.md`, `page-content-pack.md`, `navigation-linking-map.md`, `schema-technical-seo-map.md`, `indexing-crawl-map.md`, `local-entity-map.md`, `performance-accessibility-map.md`, `conversion-tracking-map.md`, `security-release-map.md`, `asset-packaging-report.md` с binary/decode verification, `animation-motion-map.md`, `artifact-readiness-report.md`, theme `media-map.json` и реальных local assets
-- НЕ запускать Excalibur article writing до успешного hard release gate базового сайта; до этого разрешён только blog slot planning и cover system/concept
+- НЕ откладывать Excalibur article writing в post-ready/Phase 2: статьи блога принадлежат только Excalibur и запускаются в Phase 1 сразу после Core + AURA
+- НЕ разрешать Aurora, Aurora Team Content, Aurora Team Lead или Page Builder писать article bodies, `article.html`, SEO longreads, BlogPosting schema или fake excerpts вместо Excalibur
 - НЕ запускать Aurora как один огромный монолитный Task; используй только режимы `THEME BASE`, `PAGE BUILDER`, `BLOG INTEGRATOR`
 - НЕ просить Aurora делать asset packaging, motion implementation, asset transport, deploy/media, report compilation, paint evidence или release gate; это отдельные `aurora-team-asset-packager`, `aurora-team-motion`, `aurora-team-wp-deploy-media`, `aurora-team-report-compiler`, `aurora-team-paint-evidence`, `aurora-team-release-gate`
 - НЕ запускать Design Guardian/финальный QA, если `content-completeness-report.md` отсутствует или содержит `❌ CONTENT BLOCKER`
@@ -174,7 +175,7 @@ python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT> --keep-se
 - НЕ принимать QA/design отчёты, если theme slug/project/public URL не совпадают с текущим deploy
 - НЕ создавать больше 5 страниц в тестовом режиме Aurora
 - НЕ считать деплой успешным без live-проверки и реального URL
-- НЕ блокировать Design Guardian/QA базового сайта из-за Excalibur failure/deferred; Excalibur является auto post-ready enrichment, а не readiness gate
+- НЕ блокировать Design Guardian/QA базового сайта из-за честного `EXCALIBUR PHASE1 DEFERRED`, но обязательно показывать deferred в handoff и не заменять статьи другим агентом
 - НЕ считать сайт готовым без `animation-motion-map.md` и `animation-implementation-report.md`, если AURA/source требует animated/interactive/3D/scroll storytelling zones
 - НЕ считать сайт готовым, если motion report заявляет GSAP/Three.js, но live не отдаёт dynamic chunks 200 (`motion-home.js`, `motion-lite.js`, Three.js scene bundle)
 - НЕ считать `threejs_scene_status: not_used` успехом, кроме случаев явного запрета 3D пользователем или documented `MOTION THREEJS BLOCKER`

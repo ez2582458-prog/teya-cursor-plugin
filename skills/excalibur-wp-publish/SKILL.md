@@ -1,13 +1,13 @@
 ---
 name: excalibur-wp-publish
-description: Excalibur WP Publish — публикация готовой статьи Excalibur в WordPress (post, featured image, schema meta). Опциональная фаза 2b.
+description: Excalibur WP Publish — Phase 1 публикация готовой статьи Excalibur в WordPress (post, featured image, schema meta).
 ---
 
 # Excalibur WP Publish
 
 ## Когда
 
-После `✅ ARTICLE OK` от Excalibur и по запросу Директора / пользователя (`allow_publish=yes` в `site.inv`). В phase1 это post-ready enrichment: publish failure не должен ломать готовность базового сайта, а должен стать `EXCALIBUR PUBLISH DEFERRED`.
+После `✅ ARTICLE OK` от Excalibur и готового deploy context (`allow_publish=yes` в `site.inv`). Это Phase 1 blog publish step: если WP/deploy доступен, не откладывать в Phase 2b. Publish failure не должен ломать готовность базового сайта, но обязан стать явным `EXCALIBUR PUBLISH DEFERRED/BLOCKER`.
 
 ## Контракт
 

@@ -21,6 +21,15 @@ def _request(url: str, *, headers: dict[str, str] | None = None, timeout: int = 
     return urllib.request.urlopen(urllib.request.Request(url, headers=merged), timeout=timeout)
 
 
+def _range_matches(value: str | None, start: int, end: int) -> bool:
+    if not value:
+        return False
+    match = re.search(r"bytes\s+(\d+)-(\d+)/(\d+|\*)", value, flags=re.I)
+    if not match:
+        return False
+    return int(match.group(1)) == start and int(match.group(2)) == end
+
+
 def _read_exact_range(url: str, start: int, end: int, *, retries: int, timeout: int) -> bytes:
     expected = end - start + 1
     last_error: Exception | None = None
@@ -28,6 +37,12 @@ def _read_exact_range(url: str, start: int, end: int, *, retries: int, timeout: 
     for attempt in range(1, retries + 1):
         try:
             with _request(url, headers={"Range": f"bytes={start}-{end}"}, timeout=timeout) as response:
+                content_range = response.headers.get("content-range")
+                if response.status != 206 or not _range_matches(content_range, start, end):
+                    raise RuntimeError(
+                        f"server did not honor Range {start}-{end}: "
+                        f"status={response.status}, content-range={content_range!r}"
+                    )
                 data = response.read(expected)
                 if len(data) != expected:
                     raise TimeoutError(f"short range read {start}-{end}: got {len(data)} of {expected}")
@@ -48,18 +63,27 @@ def _content_range_total(value: str | None) -> int | None:
     return int(match.group(1))
 
 
-def probe_url(url: str, *, timeout: int = 15) -> dict[str, str | int | None]:
+def probe_url(url: str, *, timeout: int = 15, retries: int = 3) -> dict[str, str | int | bool | None]:
     """Return cheap evidence about a remote asset without reading the full body."""
-    with _request(url, headers={"Range": "bytes=0-15"}, timeout=timeout) as response:
-        first = response.read(16)
-        return {
-            "status": response.status,
-            "content_type": response.headers.get("content-type"),
-            "content_length": response.headers.get("content-length"),
-            "content_range": response.headers.get("content-range"),
-            "total_bytes": _content_range_total(response.headers.get("content-range")),
-            "signature_hex": first.hex(),
-        }
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            with _request(url, headers={"Range": "bytes=0-15"}, timeout=timeout) as response:
+                first = response.read(16)
+                content_range = response.headers.get("content-range")
+                return {
+                    "status": response.status,
+                    "content_type": response.headers.get("content-type"),
+                    "content_length": response.headers.get("content-length"),
+                    "content_range": content_range,
+                    "range_supported": response.status == 206 and _range_matches(content_range, 0, 15),
+                    "total_bytes": _content_range_total(content_range),
+                    "signature_hex": first.hex(),
+                }
+        except Exception as exc:  # noqa: BLE001 - transient CDN/proxy errors.
+            last_error = exc
+            time.sleep(min(2.0, 0.25 * attempt))
+    raise RuntimeError(f"failed to probe {url}: {last_error}")
 
 
 def download_url_bytes(
@@ -69,7 +93,7 @@ def download_url_bytes(
     retries: int = 4,
     chunk_size: int = 8 * 1024,
     max_bytes: int = 25 * 1024 * 1024,
-) -> tuple[bytes, dict[str, str | int | None]]:
+) -> tuple[bytes, dict[str, str | int | bool | None]]:
     """Download URL bytes using Range chunks when the CDN is unstable.
 
     Some MCP/CDN URLs return a useful HEAD/Range response but hang on a full
@@ -79,7 +103,7 @@ def download_url_bytes(
     evidence = probe_url(url, timeout=timeout)
     total = evidence.get("total_bytes")
 
-    if isinstance(total, int) and total > 0:
+    if evidence.get("range_supported") and isinstance(total, int) and total > 0:
         if total > max_bytes:
             raise RuntimeError(f"remote asset is too large: {total} bytes > {max_bytes}")
 
@@ -97,6 +121,9 @@ def download_url_bytes(
     for attempt in range(1, retries + 1):
         try:
             with _request(url, timeout=timeout) as response:
+                content_length = response.headers.get("content-length")
+                if content_length and content_length.isdigit() and int(content_length) > max_bytes:
+                    raise RuntimeError(f"remote asset is too large: {content_length} bytes > {max_bytes}")
                 data = response.read(max_bytes + 1)
                 if len(data) > max_bytes:
                     raise RuntimeError(f"remote asset exceeds max_bytes={max_bytes}")

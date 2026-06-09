@@ -86,7 +86,7 @@ Aurora Team Lead и Aurora не запускают вложенные subagents.
 - `aura-shape-replication`, `aura-cyrillic-google-fonts` — вспомогательные skills AURA для дизайн-референсов, шейпов, переходов секций и кириллицы.
 - `aurora` и `wp-theme-builder` — для WP-интеграции.
 - `aurora-team-design-guardian` — обязательный дизайн-gate после Aurora и до финального QA.
-- `excalibur`, `excalibur-research`, `excalibur-geo-qa` — фаза 2; `excalibur-wp-publish` — фаза 2b.
+- `excalibur`, `excalibur-research`, `excalibur-geo-qa` — Phase 1 статьи блога; `excalibur-wp-publish` — Phase 1 publish step после deploy context.
 
 ## Маркеры
 

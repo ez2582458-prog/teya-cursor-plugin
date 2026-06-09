@@ -16,6 +16,11 @@ from teya_release_gate import sniff_image_format, validate_image_file
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"}
 
 
+def is_http_url(value: Any) -> bool:
+    text = str(value or "").strip()
+    return text.startswith(("http://", "https://"))
+
+
 def read_json(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
@@ -52,8 +57,14 @@ def registry_by_id(registry: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def pick_remote_url(item: dict[str, Any]) -> str:
     if item.get("requires_background_removal"):
-        return str(item.get("packaged_url") or item.get("transparent_url") or "").strip()
-    return str(item.get("packaged_url") or item.get("transparent_url") or item.get("url") or "").strip()
+        for key in ("transparent_url", "packaged_url", "remote_packaged_url"):
+            if is_http_url(item.get(key)):
+                return str(item[key]).strip()
+        return ""
+    for key in ("packaged_url", "remote_packaged_url", "transparent_url", "url"):
+        if is_http_url(item.get(key)):
+            return str(item[key]).strip()
+    return ""
 
 
 def target_path(theme_dir: Path, media_item: dict[str, Any], registry_item: dict[str, Any]) -> Path | None:
@@ -124,7 +135,7 @@ def main() -> int:
     errors: list[str] = []
 
     for media_item in normalize_media_assets(media_map):
-        registry_id = str(media_item.get("registry_id") or "").strip()
+        registry_id = str(media_item.get("registry_id") or media_item.get("id") or "").strip()
         registry_item = registry_map.get(registry_id, {})
         dest = target_path(theme_dir, media_item, registry_item)
         if dest is None:
@@ -175,6 +186,8 @@ def main() -> int:
                 }
             )
             media_item["local_source_path"] = str(dest.relative_to(root)).replace("\\", "/")
+            media_item["id"] = registry_id
+            media_item["registry_id"] = registry_id
             media_item["bytes"] = row["bytes"]
             media_item["detected_format"] = row["detected_local_format"]
             media_item["decode_verified"] = True

@@ -106,7 +106,7 @@ Visual gates: lint, diff, reviewer, qa
 - `AURA_BLOG_COVER_SYSTEM.md` — техника MCP, 16:9, style anchor, QA серии
 - `AURA_BLOG_COVER_PROMPTS.json` — skeleton `{ "topics": [], "status": "awaiting_topics" }` если `11-blog-topics.md` ещё нет
 
-**Фаза 2 (blog covers mode):** прочитай `11-blog-topics.md`. Для каждой темы:
+**Blog covers mode for Phase 1 Excalibur:** прочитай `11-blog-topics.md`. Для каждой темы:
 
 - `topic_archetype`, `topic_scene_descriptor` (только сюжет!), `cover_alt_text`
 - собери `gpt_image_2_prompt` = prefix + scene + suffix **или** оставь `use_concept_assembly: true`
