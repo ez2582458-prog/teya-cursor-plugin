@@ -148,7 +148,7 @@ def main() -> int:
             if needs_download:
                 if not remote_url:
                     raise RuntimeError("; ".join(local_errors) + "; no remote URL for repair")
-                data, evidence = download_url_bytes(remote_url, timeout=20, retries=5, chunk_size=16 * 1024)
+                data, evidence = download_url_bytes(remote_url, timeout=20, retries=5, chunk_size=8 * 1024)
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 detected = save_as_target_format(data, dest)
                 row.update(

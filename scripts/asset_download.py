@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import time
+import urllib.error
 import urllib.request
 
 
@@ -66,10 +67,15 @@ def download_url_bytes(
     *,
     timeout: int = 20,
     retries: int = 4,
-    chunk_size: int = 16 * 1024,
+    chunk_size: int = 8 * 1024,
     max_bytes: int = 25 * 1024 * 1024,
 ) -> tuple[bytes, dict[str, str | int | None]]:
-    """Download URL bytes using Range chunks when the CDN is unstable."""
+    """Download URL bytes using Range chunks when the CDN is unstable.
+
+    Some MCP/CDN URLs return a useful HEAD/Range response but hang on a full
+    GET or larger ranges. 8KB chunks are intentionally conservative for
+    tempfile.aiquickdraw.com and keep partial downloads detectable.
+    """
     evidence = probe_url(url, timeout=timeout)
     total = evidence.get("total_bytes")
 
@@ -86,6 +92,7 @@ def download_url_bytes(
             raise RuntimeError(f"range download length mismatch: got {len(data)} of {total}")
         return data, evidence
 
+    # Fallback for servers without Range support.
     last_error: Exception | None = None
     for attempt in range(1, retries + 1):
         try:

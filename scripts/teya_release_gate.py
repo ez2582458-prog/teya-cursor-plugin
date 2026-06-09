@@ -353,6 +353,10 @@ def css_urls(css: str) -> list[str]:
     return re.findall(r"url\((?:'|\")?([^'\"\)]+)(?:'|\")?\)", css)
 
 
+def js_dynamic_imports(js: str) -> list[str]:
+    return re.findall(r"import\(\s*['\"]([^'\"]+)['\"]\s*\)", js)
+
+
 def check_theme_assets(theme_dir: Path, errors: list[str]) -> None:
     for css_path in [theme_dir / "style.css", theme_dir / "assets" / "dist" / "style.css"]:
         if not css_path.is_file():
@@ -378,6 +382,13 @@ def check_theme_assets(theme_dir: Path, errors: list[str]) -> None:
         for image_path in sorted(images_dir.rglob("*")):
             if image_path.is_file() and image_path.suffix.lower() in IMAGE_EXTENSIONS:
                 errors.extend(validate_image_file(image_path))
+
+    main_js_path = theme_dir / "assets" / "dist" / "main.js"
+    if main_js_path.is_file():
+        for rel_import in js_dynamic_imports(read_text(main_js_path)):
+            import_path = (main_js_path.parent / rel_import).resolve()
+            if not import_path.is_file():
+                errors.append(f"main.js dynamic import references missing local chunk: {rel_import}")
 
 
 def check_paint_evidence(wp_dir: Path, public_url: str, require_live: bool, errors: list[str]) -> None:
@@ -413,7 +424,7 @@ def check_paint_evidence(wp_dir: Path, public_url: str, require_live: bool, erro
         errors.append("paint evidence verdict is not pass")
 
 
-def check_live(public_url: str, theme_slug: str, errors: list[str]) -> None:
+def check_live(public_url: str, theme_slug: str, theme_dir: Path, errors: list[str]) -> None:
     if not public_url:
         return
 
@@ -452,6 +463,33 @@ def check_live(public_url: str, theme_slug: str, errors: list[str]) -> None:
                 f"theme stylesheet is not reachable: {theme_css_url} -> {css_details['status']}, "
                 f"final_url={css_details['final_url']}, body_length={css_details['body_length']}"
             )
+
+        main_js_url = urllib.parse.urljoin(public_url, f"/wp-content/themes/{theme_slug}/assets/dist/main.js")
+        main_js_details = fetch_url_details(main_js_url, timeout=15)
+        if int(main_js_details["status"]) != 200:
+            errors.append(
+                f"theme main.js is not reachable: {main_js_url} -> {main_js_details['status']}, "
+                f"final_url={main_js_details['final_url']}, body_length={main_js_details['body_length']}"
+            )
+        else:
+            live_main_js = str(main_js_details["body"])
+            local_imports: list[str] = []
+            local_main_js = theme_dir / "assets" / "dist" / "main.js"
+            if local_main_js.is_file():
+                local_imports = js_dynamic_imports(read_text(local_main_js))
+                for rel_import in local_imports:
+                    if rel_import not in live_main_js:
+                        errors.append(f"live main.js is stale/missing dynamic import reference: {rel_import}")
+
+            dynamic_imports = sorted(set(js_dynamic_imports(live_main_js) + local_imports))
+            for rel_import in dynamic_imports:
+                dynamic_url = urllib.parse.urljoin(main_js_url, rel_import)
+                dynamic_details = fetch_url_details(dynamic_url, timeout=15)
+                if int(dynamic_details["status"]) != 200:
+                    errors.append(
+                        f"theme dynamic import is not reachable: {dynamic_url} -> {dynamic_details['status']}, "
+                        f"final_url={dynamic_details['final_url']}, body_length={dynamic_details['body_length']}"
+                    )
 
     wp_json_url = urllib.parse.urljoin(public_url, "/wp-json/")
     wp_json_details = fetch_url_details(wp_json_url, timeout=15)
@@ -516,7 +554,7 @@ def main() -> int:
     require_live = not args.no_live and bool(public_url)
     check_paint_evidence(wp_dir, public_url, require_live, errors)
     if require_live:
-        check_live(public_url, theme_slug, errors)
+        check_live(public_url, theme_slug, theme_dir, errors)
 
     if errors:
         print("TEYA RELEASE GATE FAILED")

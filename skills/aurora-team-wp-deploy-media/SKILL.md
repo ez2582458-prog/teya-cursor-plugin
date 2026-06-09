@@ -38,6 +38,8 @@ teya-memory/site.inv
   - путь вида `/avrora/public_html/wp-content/themes/<theme-slug>` нельзя слепо использовать внутри FTP root: на Beget это может создать вложенный `avrora/public_html/avrora/public_html/...`.
 - Перед upload нормализовать `FTP_REMOTE_THEME_PATH` через `teya/scripts/deploy_theme_ftp.py`; записать в `deploy-log.md` и исходный путь, и normalized path.
 - После upload проверить через FTP, что в normalized path реально есть `style.css` и `functions.php`. Если их нет — `FTP PATH BLOCKER`, не запускать bootstrap/live QA.
+- Если `assets/dist/main.js` содержит dynamic imports (`./motion/...`), до upload и после upload проверить наличие всех imported chunks (`assets/dist/motion/motion-home.js`, `motion-lite.js` и т.п.). Missing chunk = `MOTION DEPLOY BLOCKER`.
+- После live deploy выполнить HTTP probe для `assets/dist/main.js` и каждого dynamic import URL; все должны отдавать 200. `main.js` 200 при `motion-home.js` 404 не является успешным deploy.
 - Перед bootstrap/активацией прочитать canonical `PUBLIC_SITE_URL` / `project.public_site_url`; для production он обязан начинаться с `https://`.
 - После bootstrap принудительно выставить WordPress options `home` и `siteurl` в canonical HTTPS URL.
 - Проверить, что `home_url('/')` и `site_url('/')` возвращают HTTPS canonical URL. Если WordPress возвращает `http://` — `RELEASE BLOCKER`, не продолжать live QA.
@@ -59,6 +61,8 @@ teya-memory/site.inv
 - `.png` target содержит bytes WebP/JPEG/GIF/HTML/unknown после transport;
 - FTP theme files uploaded into duplicated docroot (`public_html/avrora/public_html`, `public_html/public_html`, etc.);
 - normalized FTP theme path missing `style.css` or `functions.php`;
+- `assets/dist/main.js` references missing dynamic import chunk;
+- live dynamic motion chunk 404/0 (`motion-home.js`, `motion-lite.js`, Three.js scene bundle, etc.);
 - canonical/public URL не HTTPS;
 - WordPress `home` или `siteurl` после bootstrap остаётся `http://`;
 - `wp-media-map.json` отсутствует;
