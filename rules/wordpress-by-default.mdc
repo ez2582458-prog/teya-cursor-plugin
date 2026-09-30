@@ -1,0 +1,29 @@
+---
+description: WordPress is the default stack for every site built with Teya (user decision 2026-09-30)
+alwaysApply: true
+---
+
+# WordPress by default
+
+> RU: Все сайты по умолчанию делаются на WordPress (своя тема, контент редактируется в админке); статичный HTML — только если пользователь прямо попросил.
+
+Decision by the user on 2026-09-30. Applies to every agent and every new site unless the user explicitly says otherwise for that specific site.
+
+## Default stack
+
+1. **Every website is built on WordPress.** Plain static HTML/CSS/JS sites are built **only** when the user explicitly asks for static HTML. If the request is ambiguous, choose WordPress and do not ask.
+2. **Custom theme.** Build a dedicated theme (`wp-content/themes/<theme-slug>/`) that follows the Teya/Aurora theme contracts. No page builders, no paid themes.
+3. **Content editable in WP admin.** Pages, the main menu (and footer menu if any), and contact details (phone, email, address, messengers, hours) must be editable from the WordPress admin: real WP pages, `register_nav_menus()` + `wp_nav_menu()`, and contacts via the Customizer or a theme options page. Do not hard-code editable content into templates.
+4. **SEO inside the theme, no paid plugins.** Output `<title>` and meta description per page, canonical, Open Graph, and JSON-LD (Organization/LocalBusiness, WebSite, BreadcrumbList, etc. per the schema map) from the theme code. Do not depend on Yoast, Rank Math or any other paid/third-party SEO plugin.
+5. **Contact form via `wp_mail`.** Implement the form in the theme (nonce, sanitization, honeypot/basic anti-spam, success/error states) and send with `wp_mail()`. No Contact Form 7 / WPForms / paid form plugins unless the user asks.
+6. **Deploy package = zip mirroring the site root.** The handover zip must unpack directly into the WordPress root:
+   - `wp-content/themes/<theme-slug>/` — the theme;
+   - optional `wp-content/mu-plugins/<theme-slug>-setup.php` — a must-use plugin that, on first load, idempotently creates the pages, assigns templates, builds and assigns the menus, sets the static front page (and posts page for `/blog/` if used), then marks itself done via an option so it never runs twice.
+   - The package must **not** contain `wp-config.php`, WordPress core, database dumps, credentials, or anything that creates/modifies users or passwords. The mu-plugin must never touch users, roles, passwords or `wp-config.php`.
+   - A theme-only zip (`<theme-slug>/` root) may still be produced in addition, as described in `shared/wp-theme-builder-playbook.md`.
+7. **Test on a local WordPress before handover.** Install the package on a clean local WordPress (e.g. Docker `wordpress` + `mysql`/`mariadb` images, wp-env, or WP-CLI), activate the theme, let the mu-plugin run, and verify: pages and menus exist and are editable in admin, front page is set, title/description/JSON-LD are present in the HTML, the contact form sends via `wp_mail` (a mail catcher is fine), no PHP errors/notices with `WP_DEBUG` on. Record the result in `teya-memory/wp/verification.md`. Do not hand the package over or report success without this check.
+
+## Relation to the rest of Teya
+
+- This rule sets the stack; all other Teya gates (research, AURA, Aurora Team, anti-haltura, paint QA, release gate) still apply.
+- Live deploy (FTP/SFTP/SSH) through the existing Aurora deploy agents is still allowed when the user provides access and permission; the site-root zip is produced in any case.
