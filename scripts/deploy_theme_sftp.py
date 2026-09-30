@@ -95,6 +95,7 @@ def main() -> int:
                 ignore.add(line)
 
     transport = paramiko.Transport((host, port))
+    transport.banner_timeout = 120
     try:
         if password:
             transport.connect(username=user, password=password)
