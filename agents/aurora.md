@@ -21,7 +21,7 @@ is_background: false
 2. Адаптация визуального языка из `AURADESIGN.md` под реальные PHP-шаблоны, CSS, JS и `theme.json`.
 3. Создание главной страницы.
 4. Создание ключевых внутренних страниц на пересечении дизайна AURA и семантики Ядрышка.
-5. В тестовом режиме — максимум **5 страниц всего**: главная + 4 самые важные внутренние страницы.
+5. В тестовом режиме — максимум **5 страниц всего**: главная + 4 самые важные внутренние страницы. Внутренние собираются на одном общем шаблоне `inner-shared` (rule `shared-inner-page-template.mdc`), поэтому после снятия лимита страниц может быть сколько угодно без нового дизайна.
 6. Создание меню, футера, breadcrumbs, перелинковки, schema, indexing/crawl, local entity, performance/a11y, conversion/tracking и security/release по артефактам Aurora Team.
 7. Локальная сборка, zip, деплой при разрешении, live-проверка.
 
@@ -65,7 +65,8 @@ Aurora не пишет статьи блога. Финальные article bodie
 32. `teya/shared/visual-assets-mcp-policy.md`
 33. `teya/shared/reference-visual-fidelity-gate.md`
 34. `teya/shared/design-source-decomposition-gate.md`
-35. Остальные AURA-файлы: `AURA_SOURCE_ANALYSIS.md`, `AURA_COLOR_PSYCHOLOGY.md`, `AURA_FONT_MATCH.md`, `AURA_COMPONENT_MAP.json`, `AURA_COMPOSITION_LOCK.json`
+35. `teya/shared/shared-inner-page-template.md`
+36. Остальные AURA-файлы: `AURA_SOURCE_ANALYSIS.md`, `AURA_COLOR_PSYCHOLOGY.md`, `AURA_FONT_MATCH.md`, `AURA_COMPONENT_MAP.json`, `AURA_COMPOSITION_LOCK.json`
 
 Если `AURA_PAGE_PLAN.md` отсутствует — не придумывай молча. Сформируй временный план из `AURADESIGN.md` + `06-url-map.csv`, запиши `teya-memory/wp/aurora-page-selection.md` и поставь статус `⚠️ AURA_PAGE_PLAN missing`.
 
@@ -104,7 +105,8 @@ Aurora не пишет статьи блога. Финальные article bodie
 - semantic_source: файл и строка/кластер из manual URL map;
 - design_source: файл и блок из AURA;
 - intent;
-- template file;
+- template file (`page-inner.php` по умолчанию; иное — с `unique_template_reason`);
+- content_variant: порядок блоков из библиотеки `inner-shared`;
 - key design requirements;
 - required sections;
 - required visual zones from `AURA_VISUAL_INVENTORY.json`;
@@ -160,7 +162,18 @@ Aurora не пишет статьи блога. Финальные article bodie
 - `assets/dist/style.css`
 - `assets/dist/main.js`
 
-Для выбранных внутренних страниц создай `page-{slug}.php`, если странице нужен уникальный дизайн, секции, canvas/script или специфичная структура.
+### Общий шаблон внутренних страниц (по умолчанию)
+
+Rule `shared-inner-page-template.mdc`, контракт `teya/shared/shared-inner-page-template.md`:
+
+- главная — `front-page.php`, уникальная;
+- **все типовые внутренние страницы** (услуги, гео, FAQ, цены, портфолио, о нас) — **один** шаблон `page-inner.php` (`Template Name: Внутренняя страница`) или `page.php` + `template-parts/inner/hero.php`, `faq.php`, `cta.php`, `related.php`;
+- слоты: hero + H1 → breadcrumbs slot (BreadcrumbList JSON-LD; видимых верхних крошек нет) → intro → переменные content-блоки → FAQ → CTA/форма → related links;
+- переменные секции — block patterns темы (`register_block_pattern()`, категория `teya-inner`: `teya/text-image`, `teya/cards-grid`, `teya/steps`, `teya/prices`, `teya/gallery`, `teya/geo-facts`, `teya/faq`, `teya/cta-band`…) на core-блоках + CSS-классы AURA; стилизуются один раз;
+- контент каждой страницы живёт в WP admin внутри `the_content()` (H1 = title, hero image = featured image, lead = meta-поле через `register_post_meta`, FAQ = pattern `teya/faq` → FAQPage JSON-LD из видимого FAQ). Тексты страниц в PHP не хардкодить;
+- N внутренних страниц = N контент-вариантов одного шаблона. Новая страница = новая страница в админке + выбор шаблона + patterns, без правки темы;
+- `page-{slug}.php` для внутренней страницы — только если в `aurora-team-blueprint.md` / `AURA_PAGE_PLAN.md` записан `unique_template_reason` (просьба пользователя, отдельный лендинг, калькулятор/3D/canvas/бронирование);
+- шаблон обязан нести полный visual language AURA (цветной hero, мотивы, карточки, переходы, реальные изображения) — общий ≠ generic.
 
 ## Дизайн
 
@@ -215,7 +228,7 @@ Blocker, если на live остались `tempfile.aiquickdraw.com`, MCP URL
 
 `minimum_homepage_visual_assets` / `minimum_meaningful_image_assets_homepage` и per-page `minimum_meaningful_image_assets` закрываются только реальными meaningful image assets: generated/cutout images, illustrations, thumbnails, mockups, meaningful SVG scenes. CSS cards, gradients, blobs, section backgrounds and plain icons do not count. Если фактический `meaningful_image_count` любой selected/build page меньше её минимума — `❌ CONTENT BLOCKER`, не deploy.
 
-Внутренние страницы не могут быть generic/default text templates. Если главная следует rich visual reference, каждая selected/build page должна наследовать visual language: colored band/hero, custom cards, motifs, section rhythm, illustrations/mockups or equivalent AURA-defined treatment.
+Внутренние страницы не могут быть generic/default text templates. Если главная следует rich visual reference, каждая selected/build page должна наследовать visual language: colored band/hero, custom cards, motifs, section rhythm, illustrations/mockups or equivalent AURA-defined treatment — через общий шаблон `inner-shared`, реализованный один раз, а не через отдельный дизайн для каждой страницы.
 
 Нельзя схлопывать разные source scenes в один asset: hero mascot не закрывает mascot in trial card/how-it-works/footer; один services strip не закрывает отдельные card visuals, если source имеет разные objects/cards.
 
@@ -233,7 +246,7 @@ Blocker, если на live остались `tempfile.aiquickdraw.com`, MCP URL
 - H1 один;
 - title/description из `page-content-pack.md` и Ядрышка;
 - `post_excerpt = meta description`;
-- `_wp_page_template = page-{slug}.php`, если есть кастомный шаблон;
+- `_wp_page_template = page-inner.php` для типовых внутренних страниц (общий шаблон); `page-{slug}.php` — только исключения с `unique_template_reason`;
 - FAQ видимый на странице, если FAQ есть в schema;
 - внутренние ссылки по URL map;
 - изображения с осмысленным `alt` из `AURA_ASSET_REGISTRY.json` / `page-content-pack.md`;

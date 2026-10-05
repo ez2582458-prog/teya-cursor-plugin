@@ -32,6 +32,7 @@ Subagent не запускает subagents. Team Lead только пишет bl
 - `teya-memory/design/AURA_SECTION_TRANSITIONS.json`
 - `teya-memory/design/AURA_ASSET_REGISTRY.json`
 - `teya/shared/agent-data-flow-contract.md`
+- `teya/shared/shared-inner-page-template.md`
 
 Структура сайта, оферы, аудитория, CTA и ограничения должны опираться на research dossier.
 
@@ -40,7 +41,8 @@ Subagent не запускает subagents. Team Lead только пишет bl
 - выбранные страницы теста: максимум 5;
 - sitemap;
 - обязательный blog section: `/blog/`, блок на главной, blog archive template, single template;
-- page template map;
+- page template map: главная → `front-page.php`; все типовые внутренние → один общий `page-inner.php` (`inner-shared`); `page-{slug}.php` только с `unique_template_reason`;
+- content variants table: slug × блоки из библиотеки `inner-shared` × images × FAQ × CTA override (N страниц = N контент-вариантов, не N дизайнов);
 - main menu и footer menu;
 - CTA strategy;
 - source decomposition and must-not simplifications per page;
@@ -60,6 +62,8 @@ Subagent не запускает subagents. Team Lead только пишет bl
 - conversion/tracking policy;
 - security/release/rollback policy;
 - задачи для всех parallel `aurora-team-*` агентов.
+
+Общий шаблон внутренних страниц — дефолт (rule `shared-inner-page-template.mdc`): главная уникальная, услуги/гео/FAQ/цены/портфолио/о нас — один задизайненный AURA шаблон с переменными блоками; контент страниц редактируется в WP admin через `the_content`. Тестовый лимит 5 страниц не меняется; шаблон масштабируется на любое число страниц после снятия лимита.
 
 Blueprint должен явно передать visual requirements в задачи Content, Performance/A11y, Security/Release и Aurora. Нельзя писать просто “использовать дизайн AURA” без списка required visual zones, visual budget, section blueprints and source must-not.
 

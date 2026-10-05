@@ -31,6 +31,7 @@ description: Deprecated alias for Aurora. Сборка WordPress-темы по s
 | Anti-haltura            | `teya/shared/quality-anti-haltura.md`             | Content/block/placeholder/fake-proof/indexing blockers                                                                                |
 | Visual assets policy    | `teya/shared/visual-assets-mcp-policy.md`         | MCP assets, cutouts, asset blockers                                                                                                   |
 | Reference fidelity gate | `teya/shared/reference-visual-fidelity-gate.md`   | Required visual zones, image density blockers                                                                                         |
+| Shared inner template   | `teya/shared/shared-inner-page-template.md`       | One `inner-shared` template for all typical inner pages, slots, block patterns                                                        |
 
 
 ## Структура темы
@@ -45,12 +46,19 @@ teya-memory/wp/theme/<slug>/
   inc/setup.php / enqueues.php / seo.php / customizer.php / breadcrumbs.php / security.php
   template-parts/content/content.php
   template-parts/content/content-none.php
-  page-{slug}.php   # P0 из url-map
+  page-inner.php    # ОДИН общий шаблон всех типовых внутренних (услуги, гео, FAQ, цены, портфолио, о нас)
+  template-parts/inner/hero.php / faq.php / cta.php / related.php
+  inc/patterns.php  # block patterns teya-inner (text-image, cards-grid, steps, prices, gallery, geo-facts, faq, cta-band)
+  page-{slug}.php   # только исключения с unique_template_reason
   assets/css/
   assets/js/
   theme.json
   screenshot.png
 ```
+
+## Общий шаблон внутренних страниц
+
+Rule `shared-inner-page-template.mdc`: главная уникальная; все типовые внутренние — один шаблон (hero + H1 → breadcrumbs JSON-LD → intro → переменные блоки → FAQ → CTA/форма → related links). Страницы = контент-варианты в `the_content`, редактируются в WP admin. 40 похожих страниц = 40 контент-вариантов, не 40 дизайнов. Тестовый лимит 5 страниц не меняется.
 
 ## Деплой
 
@@ -60,7 +68,7 @@ teya-memory/wp/theme/<slug>/
 4. Prefer SSH/SFTP; FTP only if SSH/SFTP is unavailable
 5. Upload theme → activate
 6. Create pages from url-map
-7. Set `_wp_page_template` and `post_excerpt` for generated pages
+7. Set `_wp_page_template` (`page-inner.php` for typical inner pages) and `post_excerpt` for generated pages
 8. Verify → `wp/verification.md`
 
 ## Проверка успеха
@@ -90,6 +98,7 @@ teya-memory/wp/theme/<slug>/
 ## Запреты
 
 - Своя структура сайта вместо url-map
+- Отдельный дизайн/шаблон на каждую похожую внутреннюю страницу без `unique_template_reason`
 - Игнорировать research dossier/fact bank
 - Игнорировать Aurora Team artifacts
 - Запускать nested subagents

@@ -29,6 +29,7 @@ Read inputs in this order:
 15. `<PROJECT_ROOT>/teya/shared/visual-assets-mcp-policy.md`.
 16. `<PROJECT_ROOT>/teya/shared/wp-media-upload-contract.md`.
 17. `<PROJECT_ROOT>/teya/shared/reference-visual-fidelity-gate.md`.
+17a. `<PROJECT_ROOT>/teya/shared/shared-inner-page-template.md` (one shared template for typical inner pages).
 18. `<PROJECT_ROOT>/teya-memory/wp/aurora-team-blueprint.md`.
 18. `<PROJECT_ROOT>/teya-memory/wp/page-content-pack.md`.
 19. `<PROJECT_ROOT>/teya/shared/quality-anti-haltura.md`.
@@ -61,11 +62,11 @@ Page selection rules:
 - Prefer pages marked `build_in_test: yes`.
 - If AURA marks more than 5 pages, keep the homepage and the four inner pages with the strongest Yadryshko SEO priority; use AURA design priority only as a tie-breaker.
 - If AURA marks fewer pages, add P0 pages from semantic-core until the limit is reached.
-- Write the final selection to `teya-memory/wp/aurora-page-selection.md`.
+- Write the final selection to `teya-memory/wp/aurora-page-selection.md`, with `template` (`front-page.php` / `page-inner.php` / exception + `unique_template_reason`) and `content_variant` (ordered blocks) per page.
 
 If a page exists only in AURA, do not treat it as an SEO landing page unless Yadryshko confirms it. It may become a service/UX page only when required by the brief.
 
-If a page exists only in Yadryshko, use the closest AURA template and document the design assumption in `aurora-page-selection.md`.
+If a page exists only in the semantic URL map, use the shared `inner-shared` template (closest AURA template) and document the content variant in `aurora-page-selection.md`.
 
 ## Aurora Team Artifacts
 
@@ -137,12 +138,36 @@ assets/src/scss/main.scss
 assets/src/js/main.js
 ```
 
-For each selected page from `AURA_PAGE_PLAN.md` + `06-url-map.csv`, create either:
+Page templates follow the **shared inner-page template** rule (`rules/shared-inner-page-template.mdc`, full contract `shared/shared-inner-page-template.md`):
 
-- `page-{slug}.php` with a Template Name header, or
-- a robust `page.php` + `_wp_page_template` assignment strategy.
+- `front-page.php` — the home page, unique and rich.
+- **One** `page-inner.php` (`Template Name: Внутренняя страница`) or a robust `page.php` — used by **all typical inner pages**: service, sub-service, geo/city, FAQ, prices, portfolio/cases, about/team, info pages. Plus `template-parts/inner/hero.php`, `faq.php`, `cta.php`, `related.php` and `inc/patterns.php`.
+- `page-{slug}.php` — only for an inner page with a recorded `unique_template_reason` (user explicitly asked, explicitly requested standalone landing, or a technically different structure: calculator, configurator, canvas/3D, booking).
 
-Prefer explicit `page-{slug}.php` for landing/service pages with custom design, scripts, canvas, or complex sections.
+Do not create a separate `page-{slug}.php` for every service/geo page "because it is a landing page". N similar pages = N content variants of one template.
+
+## Shared Inner-Page Template
+
+Slots, in fixed order, designed once by AURA and implemented once by Aurora:
+
+1. Hero + H1 (colored band / AURA motifs, H1 = page title, lead, featured image, primary CTA).
+2. Breadcrumbs slot — BreadcrumbList JSON-LD always; no visible top crumbs (see Breadcrumbs); a visible in-hero variant only if AURA defines a safe spot, applied to all inner pages at once.
+3. Intro — direct answer to the page intent (40-60-word GEO/AEO answer first).
+4. Variable content sections — chosen per page from the shared block library.
+5. FAQ — visible accordion, source of FAQPage JSON-LD.
+6. CTA / lead form — shared CTA band + `wp_mail` form; optional per-page text override.
+7. Related links — 3-8 contextual internal links.
+
+Implementation:
+
+- Register the block library once as Gutenberg block patterns in `inc/patterns.php` (`register_block_pattern_category( 'teya-inner', ... )`, `register_block_pattern( 'teya/text-image', ... )`, `teya/cards-grid`, `teya/steps`, `teya/prices`, `teya/gallery`, `teya/geo-facts`, `teya/stats-proof`, `teya/faq`, `teya/cta-band`). Patterns use core blocks + theme CSS classes with AURA tokens.
+- All page content is editable in WP admin through `the_content()`: title = H1, featured image = hero image, hero lead = registered post meta (`register_post_meta`, sanitized, small meta box) when `post_excerpt` is used for meta description, FAQ = `teya/faq` pattern (`core/details` inside `.teya-faq`), CTA override = optional post meta with Customizer defaults. Never hard-code page texts in PHP; no ACF Pro / page builders.
+- `inc/seo.php` builds FAQPage JSON-LD from the visible FAQ blocks so schema matches visible content.
+- The setup mu-plugin creates inner pages with `_wp_page_template = page-inner.php` and `post_content` = pattern markup filled from `page-content-pack.md`.
+- Adding another inner page later = new page in admin + choose «Внутренняя страница» + insert patterns. No theme edits, no new design.
+- The template must carry the full AURA visual language (colored hero, motifs, custom cards, transitions, real images). "Shared" never means generic/default WP look.
+
+The test page limit below is unchanged; the shared template is what lets the site scale to any number of inner pages once the Director lifts the limit.
 
 ## style.css Header
 
@@ -506,7 +531,8 @@ Blockers:
 - source image-bearing cards/form-side images collapsed into plain text blocks;
 - multiple source image scenes collapsed into one hero image or one strip;
 - homepage or inner selected/build page has only one meaningful image when source distributes visuals across cards/forms;
-- inner selected/build page is a generic/default text template instead of inheriting AURA visual language;
+- inner selected/build page is a generic/default text template instead of inheriting AURA visual language (a fully AURA-designed shared `inner-shared` template reused across inner pages is correct, not a blocker);
+- similar inner pages each get their own custom layout without a recorded `unique_template_reason`, or page texts are hard-coded in PHP templates;
 - replacing a source wave/blob/mask/overlap with a plain straight section;
 - using stock/fallback URLs for AURA-required assets;
 - claiming background removal without a real transparent asset URL/path;
@@ -518,7 +544,7 @@ Blockers:
 For each selected page in `AURA_PAGE_PLAN.md` and `06-url-map.csv`:
 
 - create a page with the requested slug;
-- set `_wp_page_template` when using custom templates;
+- set `_wp_page_template = page-inner.php` for typical inner pages (custom `page-{slug}.php` only for recorded exceptions);
 - set `post_excerpt` from meta description, because themes and SEO modules may use it;
 - keep H1, title, description, FAQ, and URL aligned with semantic-core briefs;
 - create internal links according to URL map.
@@ -574,7 +600,7 @@ Live verification must check:
 - public URL resolves;
 - `body_class` includes the generated theme slug or page markers;
 - `main#primary` exists;
-- no default `page.php` symptom when a custom template was expected;
+- no default `page.php` symptom when `page-inner.php` or a custom template was expected;
 - CSS/JS assets return 200;
 - meaningful images load from `/wp-content/uploads/`, not MCP/tempfile/remote URLs;
 - every meaningful `<img>` has non-empty descriptive `alt`;

@@ -56,7 +56,7 @@ $BEGIN
 Этот репозиторий собирается пайплайном **Teya** (форк ez2582458-prog/teya-cursor-plugin, rev \`$REV\`).
 В облаке плагин НЕ устанавливается — всё лежит прямо в репо:
 
-- \`.cursor/rules/teya-*.mdc\` — правила оркестратора (главное: \`teya-orchestrator.mdc\`, \`teya-manual-keywords.mdc\`, \`teya-wordpress-by-default.mdc\`).
+- \`.cursor/rules/teya-*.mdc\` — правила оркестратора (главное: \`teya-orchestrator.mdc\`, \`teya-manual-keywords.mdc\`, \`teya-wordpress-by-default.mdc\`, \`teya-shared-inner-page-template.mdc\`).
 - \`.cursor/skills/\` — skills Teya (\`director-teya\`, \`manual-keywords-url-map\`, \`aurora-*\`, \`excalibur*\` …).
 - \`.cursor/agents/\` — субагенты (director, aurora-team-*, excalibur …), \`.cursor/commands/\` — \`/teya-start\`, \`/teya-phase1\` …
 - \`teya/\` — полная копия плагина. Пути вида \`teya/shared/...\`, \`teya/scripts/...\` считаются от корня репо.

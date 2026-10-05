@@ -77,6 +77,7 @@ AURADESIGN.md: ✓
 AURA_PAGE_PLAN.md: ✓
 Key tokens: colors, fonts, grid summary
 Pages for Aurora test build: главная + до 4 внутренних
+Templates: home (unique) + inner-shared (внутренние = контент-варианты) + исключения с unique_template_reason
 Assets: N generated / blockers
 Visual gates: lint, diff, reviewer, qa
 Риски: ...
@@ -96,6 +97,7 @@ Visual gates: lint, diff, reviewer, qa
 8. Reference visual fidelity gate — `teya/shared/reference-visual-fidelity-gate.md`
 9. Source decomposition gate — `teya/shared/design-source-decomposition-gate.md`
 10. Blog cover system — `teya/shared/blog-cover-mcp-contract.md`, `teya/shared/blog-cover-brand-concept.md`
+11. **Один общий шаблон внутренних страниц** — `teya/shared/shared-inner-page-template.md` (rule `shared-inner-page-template.mdc`): главная — уникальная; все типовые внутренние (услуги, гео, FAQ, цены, портфолио, о нас) — один шаблон `inner-shared` + общая библиотека блоков. Планируй N страниц как N контент-вариантов, а не N дизайнов. Уникальный макет внутренней — только по просьбе пользователя / лендинг / техническая причина с `unique_template_reason`.
 
 ## Blog Cover Brand Concept (режим AURA)
 
@@ -124,7 +126,7 @@ Excalibur использует концепт as-is. Не пиши тексты 
 - `minimum_homepage_visual_assets`, `minimum_meaningful_image_assets_homepage` и per-page `minimum_meaningful_image_assets` должны отражать реальное количество image scenes в референсе; CSS cards/gradients/blobs не считаются meaningful images
 - Не отдавай Aurora только цвета/шрифты: для каждой ключевой секции нужен section blueprint with required background, visuals, cards, transition, motion and blockers
 - Если референс визуально плотный, `AURA_VISUAL_BUDGET.json` должен требовать colored sections, decorative motifs, custom cards, overlaps and non-rectangular transitions для каждой selected/build page, а не только для homepage
-- Внутренние selected/build pages не могут быть generic/default text templates: для каждой страницы опиши собственный visual treatment, inherited motifs and minimum visuals
+- Внутренние selected/build pages не могут быть generic/default text templates: опиши visual treatment, inherited motifs and minimum visuals **один раз для шаблона `inner-shared`** (hero band, motifs, card style, transitions, block library); каждая внутренняя страница наследует его и отличается только контентом/картинками. Отдельный дизайн на страницу — только с `unique_template_reason`
 - `AURA_STYLE_MATCH_SCORECARD.md` должен иметь численные minimum/planned scores; без scorecard статус AURA не может быть `✅`
 
 ## Visual Inventory Counts
@@ -186,11 +188,27 @@ AURA не должна выдумывать финальные SEO-URL, част
 
 ## Pages
 
+## Templates
+
+### home
+- file: front-page.php
+- layout: unique (полная fidelity к референсу)
+
+### inner-shared
+- file: page-inner.php (Template Name: Внутренняя страница)
+- slots: hero+H1, breadcrumbs (JSON-LD; видимые — только безопасное место в hero), intro, content-blocks, FAQ, CTA/form, related links
+- block_library: text-image, cards-grid, steps, prices, gallery, geo-facts, stats-proof, cta-band
+- visual_treatment: цветной hero band + мотивы, стиль карточек, переходы — из AURADESIGN.md
+- min_meaningful_images: hero image + >=1 image-bearing block
+
+## Pages
+
 ### 1. Главная
 - slug: /
 - build_in_test: yes
 - design_priority: P0
 - role: landing / homepage
+- template: home
 - design_source: ...
 - key_sections:
   - hero
@@ -201,9 +219,16 @@ AURA не должна выдумывать финальные SEO-URL, част
 - aura_requirements: ...
 - semantic_notes_for_aurora: что нужно сверить с manual URL map
 
-### 2. ...
+### 2. Услуга X (пример внутренней)
+- slug: (из manual URL map)
+- build_in_test: yes
+- role: inner / service
+- template: inner-shared
+- content_variant: [text-image, cards-grid, steps, prices]
+- page_specific_assets: hero image услуги X
+- unique_template_reason: — (пусто = общий шаблон)
 ```
 
-Если AURA считает, что страниц нужно больше, она всё равно помечает только 5 как `build_in_test: yes`, а остальные отдаёт как backlog.
+Если AURA считает, что страниц нужно больше, она всё равно помечает только 5 как `build_in_test: yes`, а остальные отдаёт как backlog. Backlog-страницы тоже планируются как контент-варианты `inner-shared` — шаблон рассчитан на любое число страниц, когда лимит снимут.
 
 Финальный ответ родителю — короткий: пути, статус deliverables, блокеры MCP.

@@ -33,6 +33,7 @@ AURA отвечает **только за дизайн**, а не за сема�
 - `teya/shared/design-source-decomposition-gate.md`
 - `teya/shared/blog-cover-mcp-contract.md`
 - `teya/shared/blog-cover-brand-concept.md`
+- `teya/shared/shared-inner-page-template.md`
 
 Если Teya установлена как плагин, пути могут быть внутри plugin root:
 
@@ -147,6 +148,17 @@ Blog covers: **сначала концепт** (`blog-cover-brand-concept.md` + 
 
 Он описывает **дизайн-план страниц**, а не SEO/URL-карту.
 
+### Один общий шаблон внутренних страниц (по умолчанию)
+
+Контракт: `teya/shared/shared-inner-page-template.md`, rule `shared-inner-page-template.mdc`.
+
+- Главная (`home`, `front-page.php`) — уникальная и богатая.
+- Все типовые внутренние страницы (услуги, гео/города, FAQ, цены, портфолио/кейсы, о нас/команда, инфо) — **один шаблон `inner-shared`**: hero + H1 → breadcrumbs slot (JSON-LD; видимые только в безопасном месте hero) → intro → переменные content-блоки → FAQ → CTA/форма → related links.
+- AURA проектирует шаблон и **общую библиотеку блоков** (6-10 штук: text-image, cards-grid, steps, prices, gallery, geo-facts, stats-proof, cta-band…) **один раз**. Внутренняя страница в плане = `template: inner-shared` + `content_variant` (порядок блоков) + свои картинки. 40 похожих страниц = 40 контент-вариантов, не 40 дизайнов.
+- Уникальный макет внутренней — только если пользователь попросил, это отдельный лендинг по запросу или нужна иная техническая структура (калькулятор, конфигуратор, 3D/canvas, бронирование). Всегда пиши `unique_template_reason`.
+- `AURA_VISUAL_BUDGET.json`, `AURA_SECTION_BLUEPRINTS.json`, `AURA_VISUAL_INVENTORY.json`: добавь `templates[]` с записью `inner-shared` (budget, blueprints по слотам и блокам библиотеки, visual zones); `pages[]` внутренних страниц ставят `"template": "inner-shared"`, `"inherits_template_budget": true` и только page-specific asset instances.
+- Шаблон обязан быть полноценно задизайнен (цветной hero, мотивы, кастомные карточки, переходы, реальные изображения) — «общий» ≠ «generic/default WP».
+
 Формат:
 
 ```markdown
@@ -158,11 +170,22 @@ Blog covers: **сначала концепт** (`blog-cover-brand-concept.md` + 
 
 ## Pages
 
+## Templates
+### home — front-page.php, unique
+### inner-shared — page-inner.php («Внутренняя страница»)
+- slots: hero+H1, breadcrumbs (JSON-LD), intro, content-blocks, FAQ, CTA/form, related links
+- block_library: ...
+- visual_treatment: ...
+- min_meaningful_images: ...
+
+## Pages
+
 ### 1. Главная
 - slug: /
 - build_in_test: yes
 - design_priority: P0
 - role: homepage / landing
+- template: home
 - design_source: ...
 - key_sections:
   - hero
@@ -175,9 +198,18 @@ Blog covers: **сначала концепт** (`blog-cover-brand-concept.md` + 
 - motion_notes: ...
 - aura_requirements: ...
 - semantic_notes_for_aurora: что нужно сверить с manual URL map
+
+### 2. Внутренняя страница (услуга / гео / FAQ / цены / портфолио / о нас)
+- slug: (из manual URL map)
+- build_in_test: yes
+- role: inner
+- template: inner-shared
+- content_variant: [text-image, cards-grid, steps, ...]
+- page_specific_assets: ...
+- unique_template_reason: — (пусто = общий шаблон)
 ```
 
-Если страниц нужно больше, пометь только 5 как `build_in_test: yes`, остальные отдай в backlog.
+Если страниц нужно больше, пометь только 5 как `build_in_test: yes`, остальные отдай в backlog как контент-варианты `inner-shared` (шаблон масштабируется на любое число страниц, когда лимит снимут).
 
 ## Source-First Law
 
@@ -185,13 +217,13 @@ Blog covers: **сначала концепт** (`blog-cover-brand-concept.md` + 
 
 - сначала повтори композицию, слои, сетку, пропорции, формы, фон, типографику и ритм;
 - разложи источник в `AURA_SOURCE_DECOMPOSITION.json` по секциям, слоям, объектам, фонам, карточкам, transition и must-not;
-- задай `AURA_VISUAL_BUDGET.json` через `pages[]`: per-page minimum colored sections, meaningful image assets, decorative motifs, overlap compositions, custom cards, non-rectangular transitions;
-- создай `AURA_SECTION_BLUEPRINTS.json` для каждой ключевой секции каждой selected/build page, чтобы Aurora знала, что именно верстать;
+- задай `AURA_VISUAL_BUDGET.json` через `templates[]` (`home`, `inner-shared`) и `pages[]`: per-page minimum colored sections, meaningful image assets, decorative motifs, overlap compositions, custom cards, non-rectangular transitions;
+- создай `AURA_SECTION_BLUEPRINTS.json` для каждой ключевой секции главной и для каждого слота/блока шаблона `inner-shared` (внутренние страницы ссылаются на шаблон), чтобы Aurora знала, что именно верстать;
 - создай `AURA_STYLE_MATCH_SCORECARD.md` с численными minimum/planned scores;
 - повтори нестандартные переходы секций: waves, masks, diagonal cuts, overlaps, blobs, object cutouts between blocks;
 - составь visual inventory всех image-bearing/card/form/callout зон источника, чтобы Aurora не собрала сайт с одним hero image;
 - посчитай `minimum_meaningful_image_assets_homepage`, `asset_instance_count_homepage` and per-page meaningful image minimums; CSS cards/gradients/blobs не считаются meaningful images;
-- не оставляй внутренние selected/build pages как generic/default text templates; каждая должна наследовать visual language AURA;
+- не оставляй внутренние selected/build pages как generic/default text templates; они наследуют visual language AURA через один общий задизайненный шаблон `inner-shared`, а не через отдельный дизайн на каждую страницу;
 - не схлопывай разные сцены персонажа/объекта в один asset без явного `reuse_reason`;
 - не меняй тему, настроение, картинку или структуру без запроса;
 - улучшения из `AURA_COLOR_PSYCHOLOGY.md` можно только предложить, но не применять автоматически;
@@ -295,6 +327,7 @@ AURA_PAGE_PLAN.md: ✓
 Source-first mode: yes/no
 Key tokens: colors, fonts, grid summary
 Pages for Aurora test build: главная + до 4 внутренних
+Templates: home (unique) + inner-shared + исключения с unique_template_reason
 Assets: N generated / blockers
 Visual inventory: N zones / N ready / blockers
 Section transitions: N / blockers

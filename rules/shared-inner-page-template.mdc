@@ -1,0 +1,25 @@
+---
+description: One shared template for all typical inner pages; unique layouts only for home/landing or on explicit user request (user decision 2026-10-05)
+alwaysApply: true
+---
+
+# Shared inner-page template by default
+
+> RU: Типовые внутренние страницы (услуги, гео, FAQ, цены, портфолио, «о нас») делаются на ОДНОМ общем шаблоне и отличаются только контентом; уникальный дизайн — только главная/лендинг или если пользователь прямо попросил.
+
+Decision by the user (Sergey) on 2026-10-05. Applies to the Director and every agent (AURA, Aurora Team Lead, Aurora Team Content, Aurora, WP Theme Builder, Design Guardian, QA) unless the user explicitly says otherwise for a specific site or page. Full contract: `shared/shared-inner-page-template.md`.
+
+## Default
+
+1. **Home page** (`front-page.php`) — may stay rich and unique, full reference fidelity.
+2. **All typical inner pages** — service, sub-service, geo/city, FAQ, prices, portfolio/cases, about/team, info pages — use **one shared template `inner-shared`**: hero + H1 → breadcrumbs slot (BreadcrumbList JSON-LD; no visible top crumbs) → intro → variable content sections from research → FAQ → CTA/form → related links.
+3. **Plan N pages as N content variants of that one template, not N designs.** AURA designs the template and a small shared block library once; pages differ by text, images, block selection and order.
+4. **Unique layout for an inner page only** when the user asks for it, the page is an explicitly requested standalone landing, or it needs a technically different structure (calculator, configurator, 3D/canvas, booking) — always recorded as `unique_template_reason`.
+5. **WordPress:** template coded once (`page-inner.php` «Внутренняя страница» or `page.php` + `template-parts/inner/*`), sections as theme block patterns; all page content is edited in WP admin via `the_content()`. No page texts hard-coded in PHP, no page builders/paid plugins.
+6. The shared template must still be fully AURA-designed (colored hero, motifs, custom cards, transitions, real images) — "shared" is not "generic/default WP look".
+
+## Director checklist
+
+- When launching AURA, tell it: plan `home` + `inner-shared` template + block library; inner pages are content variants.
+- When launching Aurora Team Lead / Content / Aurora: template map = `front-page.php` + one `page-inner.php`; exceptions only with `unique_template_reason`.
+- Test-build page limit (home + up to 4 inner) is unchanged; the template is meant to scale to any number of pages when the limit is lifted.

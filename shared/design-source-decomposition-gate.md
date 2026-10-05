@@ -86,6 +86,8 @@ CSS gradients, cards, blobs and icon dots do not count as meaningful images. The
 
 Каждая страница, которую Aurora собирает в test build, должна иметь запись в `pages[]`. Если страница не имеет visual budget, она не может быть `production-ready`.
 
+Типовые внутренние страницы наследуют budget общего шаблона: добавь `templates[]` с записью `{"template_id": "inner-shared", "template": "page-inner.php", ...те же minimum_* поля}`, а в `pages[]` внутренних страниц ставь `"template": "inner-shared"`, `"inherits_template_budget": true` и только page-specific asset instances (правило `rules/shared-inner-page-template.mdc`). `page-{slug}.php` с собственным budget — только при `unique_template_reason`.
+
 ## `AURA_SECTION_BLUEPRINTS.json`
 
 Каждый target section должен иметь implementation checklist:
@@ -137,6 +139,6 @@ Blockers:
 - reference screenshot dense/playful/visual, а план AURA допускает mostly white/text layout;
 - visual budget не задан или заполнен нулями для любой build page при сильном визуальном reference;
 - section blueprint отсутствует для любой key section выбранных страниц;
-- внутренняя страница получает generic/default text page вместо собственной visual treatment;
+- внутренняя страница получает generic/default text page вместо visual treatment (visual treatment задаётся один раз для общего шаблона `inner-shared` — см. `shared-inner-page-template.md`; отдельный дизайн на каждую страницу не требуется и не нужен);
 - forbidden simplification присутствует в Aurora output или разрешена в AURA;
 - `AURA_STYLE_MATCH_SCORECARD.md` пишет pass без чисел и evidence.

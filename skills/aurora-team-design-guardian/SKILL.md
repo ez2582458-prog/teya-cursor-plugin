@@ -189,7 +189,7 @@ Fresh browser navigation/cache-bust must show theme CSS/JS/images in network evi
 - Background removal is real when transparent cutouts are required; theme file must come from `packaged_url` / `transparent_url`, not raw `url`.
 - After deploy, MCP-generated images must be in WordPress Media Library with alt; public HTML must use `/wp-content/uploads/`, not MCP/tempfile URLs (`wp-media-upload-contract.md`).
 - If the source has image-bearing cards/form-side visuals, the final page is not allowed to keep only one hero image.
-- Inner pages are not allowed to degrade into generic/default text templates when AURA defines per-page visual treatment.
+- Inner pages are not allowed to degrade into generic/default text templates when AURA defines per-page visual treatment. A fully AURA-designed shared `inner-shared` template reused on all typical inner pages is the intended result (`rules/shared-inner-page-template.mdc`), not a defect; flag instead N different custom layouts for similar inner pages without `unique_template_reason`.
 - A live URL returning asset 200 is not enough if the local artifact is missing from memory/package.
 - `paint-evidence.json.verdict = pass` is invalid if screenshot files are missing, `screenshots.pages` is empty for inner pages, or browser network did not request theme CSS/JS/images.
 

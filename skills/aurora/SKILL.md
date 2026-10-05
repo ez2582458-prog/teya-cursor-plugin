@@ -14,7 +14,7 @@ Aurora не запускает subagents. Все Task запускает Дир�
 Aurora нельзя запускать как один большой “собери всё” Task. Директор обязан вызывать Aurora только в малых режимах:
 
 1. `AURORA THEME BASE` — каркас темы, tokens, компоненты, header/footer, menus, legal/cookie shell, base CSS/JS. Без Excalibur, без deploy.
-2. `AURORA PAGE BUILDER` — главная + до 4 внутренних страниц, blog slot по `11-blog-topics.md` или Excalibur meta, без написания статей и без placeholders.
+2. `AURORA PAGE BUILDER` — главная (`front-page.php`) + один общий шаблон внутренних `page-inner.php` с block patterns + до 4 внутренних страниц как контент-вариантов этого шаблона, blog slot по `11-blog-topics.md` или Excalibur meta, без написания статей и без placeholders.
 3. `AURORA BLOG INTEGRATOR` — в Phase 1 после Excalibur PASS: встроить реальные статьи, covers, schema, WP posts, homepage blog block, `/blog/`, `single.php`.
 
 Если prompt не содержит одного из этих режимов, Aurora обязана остановиться и попросить Директора перезапустить её в конкретном mode. Это защита от переполненного контекста и ложных отчётов.
@@ -78,6 +78,7 @@ Aurora не имеет права писать substitute article bodies. Есл
 | Anti-haltura | `teya/shared/quality-anti-haltura.md` | Минимумы контента, блоков, placeholder/fake-proof blockers |
 | Visual assets policy | `teya/shared/visual-assets-mcp-policy.md` | MCP assets, cutouts, blockers |
 | Reference fidelity gate | `teya/shared/reference-visual-fidelity-gate.md` | Required visual zones and image density |
+| Shared inner template | `teya/shared/shared-inner-page-template.md` | один шаблон `inner-shared` для типовых внутренних, слоты, block patterns, WP-реализация |
 | Intake | `teya-memory/site.inv` | Контакты, hosting mode, permissions, WP target |
 | Brief | `teya-memory/00-brief.md` | Контакты, бренд, пожелания |
 | Research dossier | `teya-memory/research/site-research-dossier.md` | Тема, рынок, продукт, аудитория, оферы, конкуренты, ограничения |
@@ -126,6 +127,16 @@ Aurora не имеет права писать substitute article bodies. Есл
 - AURA владеет дизайном, визуальной структурой и компонентами.
 - Aurora Team владеет структурой сайта, контент-пакетом, навигацией, перелинковкой, schema map, indexing/crawl, local entity, performance/a11y, conversion/tracking и security/release.
 - Aurora получает все результаты и собирает WP-тему только после сверки этих источников.
+
+## Общий шаблон внутренних страниц
+
+По умолчанию (rule `shared-inner-page-template.mdc`):
+
+- главная — уникальный `front-page.php`;
+- услуги / гео / FAQ / цены / портфолио / о нас — **один** `page-inner.php` («Внутренняя страница») или `page.php` + `template-parts/inner/*`: hero + H1 → breadcrumbs slot (JSON-LD) → intro → переменные блоки → FAQ → CTA/форма → related links;
+- переменные секции — theme block patterns (`register_block_pattern`, категория `teya-inner`), контент страниц в `the_content()` и редактируется в WP admin; тексты в PHP не хардкодить;
+- N страниц = N контент-вариантов; `page-{slug}.php` для внутренней — только с `unique_template_reason` из blueprint/AURA_PAGE_PLAN;
+- тестовый лимит 5 страниц не меняется; шаблон масштабируется на любое число страниц после снятия лимита.
 
 ## Обязательная интеграция
 
@@ -226,7 +237,10 @@ teya-memory/wp/theme/<slug>/
   inc/setup.php / enqueues.php / seo.php / customizer.php / breadcrumbs.php / security.php
   template-parts/content/content.php
   template-parts/content/content-none.php
-  page-{slug}.php
+  page-inner.php      # общий шаблон всех типовых внутренних
+  template-parts/inner/hero.php / faq.php / cta.php / related.php
+  inc/patterns.php    # block patterns teya-inner
+  page-{slug}.php     # только исключения с unique_template_reason
   assets/dist/style.css
   assets/dist/main.js
   theme.json
@@ -240,7 +254,7 @@ teya-memory/wp/theme/<slug>/
 3. Prefer SSH/SFTP; FTP only if SSH/SFTP is unavailable
 4. Upload theme → activate if allowed
 5. Create selected pages
-6. Set `_wp_page_template` and `post_excerpt`
+6. Set `_wp_page_template` (`page-inner.php` для типовых внутренних) and `post_excerpt`
 7. Verify live
 
 ## Проверка успеха

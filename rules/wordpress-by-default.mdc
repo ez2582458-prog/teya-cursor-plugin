@@ -25,5 +25,6 @@ Decision by the user on 2026-09-30. Applies to every agent and every new site un
 
 ## Relation to the rest of Teya
 
+- Page layouts: the home page may be unique; all typical inner pages use one shared template (`page-inner.php` + block patterns) with content in `the_content()` — see `rules/shared-inner-page-template.mdc`.
 - This rule sets the stack; all other Teya gates (research, AURA, Aurora Team, anti-haltura, paint QA, release gate) still apply.
 - Live deploy (FTP/SFTP/SSH) through the existing Aurora deploy agents is still allowed when the user provides access and permission; the site-root zip is produced in any case.

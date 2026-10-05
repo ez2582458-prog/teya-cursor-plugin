@@ -42,6 +42,7 @@ is_background: false
 20. `teya/shared/agent-data-flow-contract.md`
 21. `teya/shared/wp-theme-builder-playbook.md`
 22. `teya/shared/quality-anti-haltura.md`
+23. `teya/shared/shared-inner-page-template.md`
 
 ## Выход
 
@@ -58,12 +59,13 @@ teya-memory/fragments/aurora-team-lead.md
 - почему выбраны именно они: связь с `AURA_PAGE_PLAN.md` и manual `06-url-map.csv`;
 - sitemap и hierarchy;
 - обязательный blog section: `/blog/`, homepage blog block, `home.php` или `page-blog.php`, `single.php`;
-- page template map: `front-page.php`, `page-{slug}.php`, `page.php`;
+- page template map по правилу общего шаблона: главная → `front-page.php`; **все типовые внутренние страницы** (услуги, гео, FAQ, цены, портфолио, о нас) → один `page-inner.php` («Внутренняя страница») / `page.php`; `page-{slug}.php` — только исключения с `unique_template_reason` (просьба пользователя, отдельный лендинг, иная техническая структура);
+- content variants table: slug × порядок блоков из библиотеки `inner-shared` × required images × число FAQ × CTA override — N страниц = N контент-вариантов одного шаблона, а не N дизайнов;
 - main menu;
 - footer menu;
 - CTA strategy;
-- блоки для каждой страницы;
-- visual budget per page: colored sections, motifs, overlaps, custom cards, non-rectangular transitions, meaningful image minimums;
+- блоки для каждой страницы (для внутренних — выбор и порядок блоков из общей библиотеки `inner-shared`, а не новая композиция);
+- visual budget per page (внутренние наследуют budget шаблона `inner-shared` + свои asset instances): colored sections, motifs, overlaps, custom cards, non-rectangular transitions, meaningful image minimums;
 - source decomposition requirements per page: must-match and must-not from the reference;
 - section blueprints per page: required backgrounds, visuals, cards, transitions, motion and blockers;
 - style match scorecard thresholds;
@@ -82,6 +84,17 @@ teya-memory/fragments/aurora-team-lead.md
 - technical requirements for Aurora;
 - data-flow requirements: какие AURA/Core/Team artifacts Aurora обязана перенести в `site-spec.json`, `build-report.json`, `content-completeness-report.md`;
 - список задач для parallel team agents.
+
+## Общий шаблон внутренних страниц
+
+По умолчанию (rule `shared-inner-page-template.mdc`, контракт `teya/shared/shared-inner-page-template.md`):
+
+- главная может быть богатой и уникальной;
+- все типовые внутренние страницы собираются на **одном** шаблоне `inner-shared`: hero + H1 → breadcrumbs slot (JSON-LD) → intro → content-блоки из research/брифов → FAQ → CTA/форма → related links;
+- планируй страницы как контент-варианты этого шаблона; не проектируй отдельный layout на каждую страницу;
+- уникальный layout внутренней — только с записанным `unique_template_reason`;
+- в задачах для `aurora-team-content` требуй тексты по слотам шаблона; для Aurora — один `page-inner.php` + block patterns, контент страниц в `the_content` (редактируется в WP admin);
+- тестовый лимит 5 страниц не меняется; отметь в blueprint, что шаблон рассчитан на любое число страниц после снятия лимита.
 
 ## Блог обязателен
 

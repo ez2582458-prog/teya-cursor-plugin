@@ -26,11 +26,13 @@ is_background: false
 Также обязательно прочитай `teya/shared/quality-anti-haltura.md`.
 Также обязательно прочитай `teya/shared/visual-assets-mcp-policy.md` и `teya/shared/reference-visual-fidelity-gate.md`.
 Также обязательно прочитай `teya/shared/agent-data-flow-contract.md`.
+Также обязательно прочитай `teya/shared/shared-inner-page-template.md` (rule `shared-inner-page-template.mdc`).
 
 ## Жёсткие правила
 
 - **Не придумывай** структуру сайта — бери URL и приоритеты из url-map Ядрышка
 - **Не придумывай** визуал — реализуй токены и компоненты из `AURADESIGN.md`
+- **Один общий шаблон внутренних страниц:** главная — уникальная; услуги/гео/FAQ/цены/портфолио/о нас — один `page-inner.php` + block patterns, страницы = контент-варианты в `the_content` (редактируются в WP admin). Отдельный `page-{slug}.php` — только с `unique_template_reason`
 - Контакты из brief — в header/footer/контактных блоках
 - Если research dossier/fact bank отсутствуют — статус ❌ в handoff, список блокеров, **не деплой**
 - Если semantic или design неполные — статус ❌ в handoff, список блокеров, **не деплой**
@@ -95,7 +97,7 @@ python teya/scripts/validate_teya_inv.py --path <PROJECT_ROOT>/teya-memory/site.
 - `page.php`, `single.php`, `archive.php`, `search.php`, `searchform.php`, `404.php`
 - `inc/setup.php`, `inc/enqueues.php`, `inc/seo.php`, `inc/customizer.php`, `inc/breadcrumbs.php`, `inc/security.php`
 - `template-parts/content/content.php`, `template-parts/content/content-none.php`
-- Шаблоны страниц по P0 из url-map: `page-{slug}.php` или универсальный + `_wp_page_template`
+- Шаблоны страниц: `front-page.php` (уникальная главная) + **один** общий `page-inner.php` («Внутренняя страница») для всех типовых внутренних P0/P1 из url-map + `template-parts/inner/*` + `inc/patterns.php` (block patterns `teya-inner`); `page-{slug}.php` — только исключения с `unique_template_reason`
 - Assets: CSS/JS/fonts по AURA (Google Fonts из `AURA_FONT_MATCH.md`)
 - Visual zones: реализуй required zones из `AURA_VISUAL_INVENTORY.json`; не заменяй image-bearing cards plain text блоками
 - `theme.json`
@@ -129,7 +131,7 @@ Credentials: env или `<PROJECT_ROOT>/teya-memory/hosting.credentials.local` (
 4. **FTP/SFTP/SSH** — загрузка файлов темы
 5. Активируй тему (WP-CLI или админка если доступна)
 6. Создай/обнови страницы и посты
-7. Для страниц выставь `_wp_page_template` и `post_excerpt = meta description`
+7. Для страниц выставь `_wp_page_template` (`page-inner.php` для типовых внутренних) и `post_excerpt = meta description`; контент секций — block patterns в `post_content`
 8. Права файлов: 644 файлы, 755 каталоги
 9. Сброс кэша если есть
 
@@ -152,7 +154,8 @@ Credentials: env или `<PROJECT_ROOT>/teya-memory/hosting.credentials.local` (
 - Blog section на главной, `/blog/` и single post template работают
 - Нет видимых top breadcrumbs, которые перекрывают меню/hero/CTA
 - Privacy/cookies pages и cookie accept button работают
-- Нет симптома дефолтного `page.php`, если ожидался кастомный `page-{slug}.php`
+- Нет симптома дефолтного `page.php`, если ожидался `page-inner.php` или кастомный `page-{slug}.php`
+- Все типовые внутренние страницы используют один общий шаблон; нет N разных макетов без `unique_template_reason`; тексты страниц не захардкожены в PHP
 - Нет placeholders, фейковых отзывов, sitemap non-200, неправильного robots Host/Sitemap или staging domain leakage
 
 ### 6. Handoff
@@ -185,3 +188,4 @@ Deploy log: teya-memory/wp/deploy-log.md
 - Не выдумывать URL успеха
 - Не коммитить credentials
 - Не игнорировать url-map в пользу «красивой» структуры
+- Не делать отдельный дизайн/шаблон на каждую похожую внутреннюю страницу

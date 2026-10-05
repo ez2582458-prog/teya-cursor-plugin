@@ -180,7 +180,7 @@ teya-memory/fragments/aurora-team-design-guardian.md
 - фейковые отзывы вместо реальных доказательств;
 - honeypot field видно пользователю как обычное поле;
 - footer/header visually чужие относительно AURA;
-- внутренние страницы выглядят как другой сайт.
+- внутренние страницы выглядят как другой сайт (при этом одинаковая раскладка всех типовых внутренних на общем шаблоне `inner-shared` — норма, не дефект);
 - AURA/source имеет нестандартные переходы секций, а тема заменила их прямыми generic блоками;
 - AURA/source имеет image-bearing cards/form-side visual/callouts, а тема собрала plain text cards и один hero image;
 - `AURA_SOURCE_DECOMPOSITION.json` или `AURA_SECTION_BLUEPRINTS.json` требуют dense/playful/source-first sections, а live page выглядит generic/white/text-heavy;

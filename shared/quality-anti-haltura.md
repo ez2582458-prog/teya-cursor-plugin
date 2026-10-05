@@ -30,7 +30,8 @@
 - Screenshot/computed style evidence противоречит `design-integrity-report.md`.
 - `AURA_VISUAL_BUDGET.json` или `AURA_SECTION_BLUEPRINTS.json` отсутствуют при сильном visual reference.
 - Visual budget/section blueprints требуют плотный, цветной, игровой/брендовый layout, а live paint выглядит generic/mostly-white/text-heavy.
-- Любая внутренняя выбранная страница выглядит как generic/default text template и не наследует visual language AURA.
+- Любая внутренняя выбранная страница выглядит как generic/default text template и не наследует visual language AURA. Полностью задизайненный AURA общий шаблон `inner-shared`, повторённый на всех типовых внутренних страницах, — норма (`shared-inner-page-template.md`), не generic.
+- Похожие внутренние страницы получили каждая свой отдельный макет без `unique_template_reason` или тексты страниц захардкожены в PHP вместо `the_content` (нарушение `rules/shared-inner-page-template.mdc`).
 - `AURA_SOURCE_DECOMPOSITION.json` содержит `must_not`, но итоговый сайт нарушает эти запреты.
 - `AURA_VISUAL_INVENTORY.json` отсутствует или содержит required visual zones со статусом не `ready`.
 - Required visual asset отсутствует локально в `teya-memory/wp/theme/<theme-slug>/`, даже если live URL отдаёт 200.

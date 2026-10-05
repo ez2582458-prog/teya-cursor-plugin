@@ -78,6 +78,10 @@ teya-memory/fragments/aurora-team-content.md
 
 Запрещено отдавать Aurora только список H2/H3 без текста.
 
+## Внутренние страницы = контент-варианты общего шаблона
+
+По rule `shared-inner-page-template.mdc` типовые внутренние страницы (услуги, гео, FAQ, цены, портфолио, о нас) собираются на одном шаблоне `inner-shared`. Для каждой такой страницы группируй тексты по слотам: hero (H1, lead, CTA) → intro (прямой ответ 40-60 слов) → content-блоки по порядку из `content_variant` blueprint (тип блока из библиотеки + текст + images/alt) → FAQ → CTA override (если нужен) → related links. Тексты должны вставляться в WP admin как содержимое block patterns, а не верстаться в PHP. Главная — отдельный уникальный пакет.
+
 ## Block Inventory
 
 Для каждой страницы добавь:

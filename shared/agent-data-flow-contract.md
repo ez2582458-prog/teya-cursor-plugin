@@ -300,7 +300,7 @@ Design Guardian и QA обязаны проверять, что отчёты о�
 - per-page meaningful image count меньше per-page visual budget minimum;
 - visual budget или section blueprints отсутствуют/не реализованы;
 - paint evidence отсутствует для любой selected/build page;
-- внутренняя selected/build page выглядит как generic/default text template вместо AURA visual language;
+- внутренняя selected/build page выглядит как generic/default text template вместо AURA visual language (общий задизайненный шаблон `inner-shared` на всех внутренних — норма, см. `shared-inner-page-template.md`);
 - live browser paint выглядит как unstyled/default HTML или theme CSS не применился;
 - browser network не содержит theme CSS/JS/images после fresh navigation/cache-bust;
 - screenshot files referenced in `paint-evidence.json` do not exist;
