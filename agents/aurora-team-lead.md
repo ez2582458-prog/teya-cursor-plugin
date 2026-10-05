@@ -55,7 +55,7 @@ teya-memory/fragments/aurora-team-lead.md
 
 ## Что должно быть в `aurora-team-blueprint.md`
 
-- выбранные страницы тестовой сборки: максимум 5 всего;
+- выбранные страницы сборки: весь список из брифа / `06-url-map.csv` (N из брифа = N; без потолка 5);
 - почему выбраны именно они: связь с `AURA_PAGE_PLAN.md` и manual `06-url-map.csv`;
 - sitemap и hierarchy;
 - обязательный blog section: `/blog/`, homepage blog block, `home.php` или `page-blog.php`, `single.php`;
@@ -94,7 +94,7 @@ teya-memory/fragments/aurora-team-lead.md
 - планируй страницы как контент-варианты этого шаблона; не проектируй отдельный layout на каждую страницу;
 - уникальный layout внутренней — только с записанным `unique_template_reason`;
 - в задачах для `aurora-team-content` требуй тексты по слотам шаблона; для Aurora — один `page-inner.php` + block patterns, контент страниц в `the_content` (редактируется в WP admin);
-- тестовый лимит 5 страниц не меняется; отметь в blueprint, что шаблон рассчитан на любое число страниц после снятия лимита.
+- если бриф задал N страниц — blueprint на все N; отметь, что `inner-shared` масштабируется на любое N без нового дизайна.
 
 ## Блог обязателен
 

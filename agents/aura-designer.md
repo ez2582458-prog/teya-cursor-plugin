@@ -76,7 +76,7 @@ Design root: teya-memory/design/
 AURADESIGN.md: ✓
 AURA_PAGE_PLAN.md: ✓
 Key tokens: colors, fonts, grid summary
-Pages for Aurora test build: главная + до 4 внутренних
+Pages for build: все страницы из брифа / manual URL map (N из брифа = N; без потолка 5)
 Templates: home (unique) + inner-shared (внутренние = контент-варианты) + исключения с unique_template_reason
 Assets: N generated / blockers
 Visual gates: lint, diff, reviewer, qa

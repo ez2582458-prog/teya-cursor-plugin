@@ -21,7 +21,7 @@ is_background: false
 2. Адаптация визуального языка из `AURADESIGN.md` под реальные PHP-шаблоны, CSS, JS и `theme.json`.
 3. Создание главной страницы.
 4. Создание ключевых внутренних страниц на пересечении дизайна AURA и семантики Ядрышка.
-5. В тестовом режиме — максимум **5 страниц всего**: главная + 4 самые важные внутренние страницы. Внутренние собираются на одном общем шаблоне `inner-shared` (rule `shared-inner-page-template.mdc`), поэтому после снятия лимита страниц может быть сколько угодно без нового дизайна.
+5. **Набор страниц = заполненный бриф** / `06-url-map.csv`: если бриф задал N — собери все N. Старый потолок «5 страниц» не применять при заданном брифе. Если бриф молчит — эскалируй Директору (`NEEDS PAGES`), не дефолть 5. Внутренние — на одном шаблоне `inner-shared` (rule `shared-inner-page-template.mdc`).
 6. Создание меню, футера, breadcrumbs, перелинковки, schema, indexing/crawl, local entity, performance/a11y, conversion/tracking и security/release по артефактам Aurora Team.
 7. Локальная сборка, zip, деплой при разрешении, live-проверка.
 
@@ -88,7 +88,7 @@ Aurora не пишет статьи блога. Финальные article bodie
 
 Если AURA предлагает страницу, которой нет в manual URL map, добавь её в backlog или создай только если это обязательная служебная/UX-страница из brief (`contacts`, `privacy`, `cookies`). Если URL map предлагает SEO-страницу без дизайн-описания AURA, используй ближайший шаблон из AURA и отметь это в `aurora-page-selection.md`.
 
-## Выбор 5 страниц в тестовом режиме
+## Выбор страниц (из брифа)
 
 Выбирай страницы так:
 
@@ -96,7 +96,7 @@ Aurora не пишет статьи блога. Финальные article bodie
 2. Страницы с `build_in_test: yes` из `AURA_PAGE_PLAN.md`, если они подтверждаются `06-url-map.csv` или являются обязательными UX/служебными страницами.
 3. Если таких больше 4 внутренних — оставь 4 с наивысшим SEO-приоритетом URL map, а при равенстве приоритета учитывай дизайн-приоритет AURA.
 4. Если таких меньше — добери из `06-url-map.csv` по приоритету `P0`, затем `P1`.
-5. Не создавай больше 5 страниц всего, пока Директор не снимет тестовое ограничение.
+5. Не обрезай список страниц брифа. N из брифа = N страниц сборки (+ privacy/cookies по контракту).
 
 Для каждой выбранной страницы запиши в `teya-memory/wp/aurora-page-selection.md`:
 
@@ -468,7 +468,7 @@ python teya/scripts/validate_teya_inv.py --path <PROJECT_ROOT>/teya-memory/site.
 3. **Импортируй все required images в WP Media Library** с alt meta (`wp-media-upload-contract.md`).
 4. Создай `teya-memory/wp/wp-media-map.json` и `media-map.json` в теме.
 5. Активируй тему, если `allow_activate_theme=yes`.
-6. Создай/обнови выбранные 5 страниц.
+6. Создай/обнови все страницы из selection / брифа / `06-url-map.csv`.
 7. Проверь `_wp_page_template`, `post_excerpt`, permalink.
 8. Права: 644 файлы, 755 каталоги.
 9. Очисти кэш, если разрешено.
@@ -485,7 +485,7 @@ python teya/scripts/validate_teya_inv.py --path <PROJECT_ROOT>/teya-memory/site.
 - `ABSPATH` check есть;
 - `wp_head`, `wp_footer`, `wp_body_open` есть;
 - `main#primary` есть;
-- 5 страниц выбраны корректно;
+- страницы из брифа / URL map выбраны корректно (без незаконного cap 5);
 - HTML соответствует AURA;
 - SEO meta/schema есть;
 - меню, футер и перелинковка соответствуют `navigation-linking-map.md`;
@@ -547,7 +547,7 @@ Missing data: ...
 
 ## Запреты
 
-- Не создавать больше 5 страниц в тестовом режиме.
+- Не обрезать набор страниц заполненного брифа до 5.
 - Не запускать nested subagents.
 - Не игнорировать `AURA_PAGE_PLAN.md`.
 - Не игнорировать артефакты Aurora Team.

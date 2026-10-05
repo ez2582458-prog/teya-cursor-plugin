@@ -91,7 +91,7 @@ teya-memory/fragments/aurora-team-qa.md
 - Extended design reports: reports содержат `visual_budget_status`, `section_blueprints_status`, `style_match_scorecard_status`, `per_page_visual_budget_status`, `per_page_section_blueprints_status`, `per_page_meaningful_image_counts`, `per_page_visual_gaps`.
 - Paint report identity: `paint-evidence.json` относится к тому же public URL/theme slug/current deploy.
 - Section transitions: `AURA_SECTION_TRANSITIONS.json` соблюдён, нестандартные wave/blob/mask/overlap не заменены прямыми generic секциями.
-- Страницы: максимум 5 в тесте, slug/templates совпадают с selection, каждая выбранная страница реально открывается.
+- Страницы: набор = бриф / selection / URL map (без незаконного cap 5), slug/templates совпадают, каждая выбранная страница реально открывается.
 - Контент: H1 один, Title/Description есть, объём не thin, FAQ видимы, обязательные блоки есть.
 - Anti-haltura: нет `пример отзыва`, `пример участника`, `в разработке`, `скоро`, `TODO`, `placeholder`, `lorem`, `заглушка` в публичном HTML.
 - Breadcrumbs: нет видимых верхних крошек, которые перекрывают меню/hero/CTA; BreadcrumbList допускается как JSON-LD.

@@ -59,8 +59,14 @@ target_audience =
 competitors =
 exclude_topics =
 existing_content_path =
+# From filled user brief (/teya-brief): do NOT invent; if brief lists N pages, build N.
+pages_count =
+pages_list =
 blog_required = yes
+blog_articles_count =
 starter_blog_posts = 3
+# keywords_source: brief | chat | director-with-user (never yadryshko/wordstat)
+keywords_source = brief
 
 [seo]
 wordstat_region = 225

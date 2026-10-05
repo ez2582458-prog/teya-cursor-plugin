@@ -14,6 +14,14 @@ alwaysApply: true
 - Нельзя останавливать пайплайн с просьбой «откройте и отредактируйте `site.inv`». Если не хватает полей — задай короткий список вопросов в чате, получи ответы, **сам** допиши файл, затем продолжай.
 - Секреты (пароли, FTP/SSH, SMTP) по-прежнему только в `teya-memory/teya.env.local` — их пользователь может прислать в чат; бот кладёт в env.local, не в git.
 
+### Заполненный бриф задаёт объём сайта
+
+- Источник правды по объёму: заполненный бриф пользователя (`/teya-brief`, шаблон `shared/site-brief-template.md`) → `teya-memory/00-brief.md`.
+- **Страницы:** если в брифе указаны число и/или список страниц — строй **ровно этот набор**. Старый потолок «максимум 5 страниц» **не действует**, когда бриф задаёт страницы. Если бриф молчит о числе/списке — спроси в чате; не подставляй дефолт 5.
+- **Статьи блога:** число статей — только из брифа (`blog_articles_count` / `starter_blog_posts`). Не раздувай. Если «блог не нужен» — не планируй Phase 1 статьи.
+- **Ключи:** только из брифа или явного ответа в чате. Лёгкая нормализация slug в URL-карте допустима. Не выдумывай ключи сверх брифа.
+- Служебные privacy/cookies — по контракту Teya, отдельно от пользовательского N контент-страниц.
+
 ### Ключевые слова и карта URL — без Ядрышко
 
 - Хелпер **Ядрышко** / `core` / `yadryshko` **исключён из пайплайна**. Не вызывай `Task(core)`, `Task(yadryshko)`, skill `yadryshko-semantic-core`.
@@ -23,8 +31,8 @@ alwaysApply: true
 
 ### Откуда берутся ключи
 
-1. Список ключей присылает пользователь или сайтостроитель в чате / файле, **или**
-2. Директор / сайтостроитель сам выбирает рабочий список из brief + research (услуги, ниша, оферы) — без Wordstat.
+1. Список ключей из **заполненного брифа** или явного ответа пользователя/сайтостроителя в чате / файле (предпочтительно), **или**
+2. Если в брифе явно «подобрать вместе» — Директор предлагает короткий список **в чате на утверждение**, затем пишет файлы. Без Wordstat. Не подставлять большой автосписок молча.
 
 ### Что пишет Директор вместо Ядрышко
 
@@ -40,11 +48,11 @@ alwaysApply: true
 
 Не требовать `03-wordstat-raw.csv`, HTML/XLSX отчёты Ядрышко, минимальное число Wordstat-вызовов.
 
-Порядок фазы 1: brief + заполнение `site.inv` ботом → research → keywords+URL map → AURA (параллельно или сразу после) → остальной пайплайн.
+Порядок фазы 1: выдать шаблон `/teya-brief` → принять заполненный бриф → `00-brief.md` + `site.inv` ботом → research → keywords+URL map **по брифу** → AURA (параллельно или сразу после) → остальной пайплайн (N страниц из брифа, без cap 5).
 
 ## EN
 
 - Bot fills `site.inv` from chat brief; never wait for the user to hand-edit the file.
 - No Ядрышко / Wordstat / MCP-KV keyword expansion in the pipeline.
-- Keywords come from the user/сайтостроитель or Director selection; Director writes URL map + briefs under `teya-memory/semantic-core/`.
+- Keywords come from the filled brief or explicit chat; page set and article count come from the brief (no silent 5-page cap when brief lists pages). Director writes URL map under `teya-memory/semantic-core/`.
 - Keep MCP-KV for image generation only.

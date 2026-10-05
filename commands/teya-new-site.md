@@ -24,8 +24,8 @@ python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT> --keep-se
 После reset:
 
 1. Проверь `teya-memory/memory-reset.json` → `status: clean`.
-2. Запиши новый brief в `teya-memory/00-brief.md`.
-3. **Сам** заполни новый `site.inv` из данных чата (пользователь файл не правит). `teya.env.local` — если нужны публикация, SMTP, аналитика или WordPress (секреты можно принять в чате и записать в файл).
+2. Выдай `/teya-brief` (пустой `shared/site-brief-template.md`), дождись заполнения, запиши в `teya-memory/00-brief.md`.
+3. **Сам** заполни новый `site.inv` из заполненного брифа (страницы/статьи/ключи — только из брифа; без cap 5). `teya.env.local` — если нужны публикация, SMTP, аналитика или WordPress (секреты можно принять в чате и записать в файл).
 4. Продолжай по `commands/teya-phase1.md`.
 
 Без fresh `memory-reset.json` не запускай subagents.

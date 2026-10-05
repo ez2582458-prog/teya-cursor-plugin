@@ -16,10 +16,19 @@ description: Директор Teya — фаза 1: Research → manual keywords/
 
 По умолчанию главная — уникальная, а все типовые внутренние страницы (услуги, гео, FAQ, цены, портфолио, о нас) — **один общий шаблон** `inner-shared` с переменными content-блоками; 40 похожих страниц = 40 контент-вариантов, не 40 дизайнов. Уникальный макет — только главная/лендинг или по прямой просьбе пользователя (`unique_template_reason`). В WordPress шаблон делается один раз (`page-inner.php` + block patterns), контент страниц редактируется в админке через `the_content`. Передавай это в задачи AURA, Aurora Team Lead, Content и Aurora. Полный контракт: `rules/shared-inner-page-template.mdc`, `shared/shared-inner-page-template.md`.
 
+## AUTO-BRIEF (решение пользователя)
+
+Когда пользователь просит бриф / новый сайт — команда `/teya-brief`: выдай пустой `shared/site-brief-template.md`, дождись заполнения, перенеси в `00-brief.md` + `site.inv` + manual keywords/URL map.
+
+- **Число и список страниц** — только из заполненного брифа. Если бриф задаёт N страниц — строй N; **старый потолок «max 5» снят для брифа**. Если бриф молчит — спроси, не дефолть 5.
+- **Число статей блога** — из брифа; не раздувай.
+- **Ключи** — из брифа / чата; без Ядрышко/Wordstat; slug можно слегка нормализовать.
+- Не выдумывай страницы, статьи и ключи сверх брифа.
+
 ## Цепочка
 
 ```text
-Brief + bot fills site.inv → teya-researcher → research gate → [manual keywords/URL map ║ aura-designer] → merge → aurora-team-lead → [content ║ navigation ║ schema ║ indexing ║ local-entity ║ performance-a11y ║ conversion ║ security-release] → content gate → aurora → content-completeness gate → aurora-team-design-guardian → aurora-team-qa → URL
+/teya-brief (empty template → filled brief) → 00-brief.md + bot fills site.inv → teya-researcher → research gate → [manual keywords/URL map from brief ║ aura-designer] → merge → aurora-team-lead → [content ║ navigation ║ schema ║ indexing ║ local-entity ║ performance-a11y ║ conversion ║ security-release] → content gate → aurora (N pages from brief) → content-completeness gate → aurora-team-design-guardian → aurora-team-qa → URL
 ```
 
 ## Параллель (безопасно)
@@ -79,11 +88,11 @@ Aurora Team Lead и Aurora не запускают вложенные subagents.
 - нестандартные шейпы/переходы секций из AURA/source заменены generic прямыми блоками;
 - Design Guardian не дал `✅ DESIGN OK`.
 
-Перед первым запуском используй `/teya-start`: собери данные в чате и сам заполни `site.inv` (не жди ручного редактирования файла).
+Перед первым запуском используй `/teya-brief` (или `/teya-start`): выдай шаблон брифа, прими заполненный бриф в чате и сам заполни `site.inv` (не жди ручного редактирования файла).
 
 Обязательные файлы (бот пишет сам из чата):
 
-- `teya-memory/site.inv` — данные бизнеса, дизайна, контента и разрешения. **Пользователь не правит файл руками** — Директор заполняет из брифа в чате (`rules/manual-keywords.mdc`).
+- `teya-memory/site.inv` — данные бизнеса, дизайна, контента и разрешения. **Пользователь не правит файл руками** — Директор заполняет из заполненного брифа в чате (`/teya-brief`, `rules/manual-keywords.mdc`). Поля `pages_count` / `pages_list` / `blog_articles_count` — из брифа.
 - `teya-memory/teya.env.local` — приватные доступы к WordPress, FTP/SFTP/SSH, SMTP, аналитике и webhook. Не коммитить.
 
 ## Skills
