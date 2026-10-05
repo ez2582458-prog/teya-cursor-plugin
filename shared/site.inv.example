@@ -1,5 +1,6 @@
 # Teya site intake file.
-# Copy to <PROJECT_ROOT>/teya-memory/site.inv and fill before a full E2E run.
+# Director/bot copies to <PROJECT_ROOT>/teya-memory/site.inv and fills from chat brief.
+# User does NOT edit this file by hand. Keywords: no Wordstat — see rules/manual-keywords.mdc.
 # Keep real credentials only in local/private files. Do not commit secrets.
 # Main secrets file: <PROJECT_ROOT>/teya-memory/teya.env.local
 

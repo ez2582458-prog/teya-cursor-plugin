@@ -1,0 +1,50 @@
+---
+description: RU+EN — анкету site.inv заполняет бот; ключи и URL-карта вручную без Ядрышко/Wordstat/MCP-KV
+alwaysApply: true
+---
+
+# Manual keywords + bot-filled site.inv / Ручные ключи и анкета ботом
+
+## RU
+
+### Анкета (`site.inv`)
+
+- Пользователь **не** заполняет `teya-memory/site.inv` руками.
+- Директор / оркестратор / сайтостроитель **сам** записывает `site.inv` из брифа и данных, которые пользователь (или сайтостроитель) прислал в чате.
+- Нельзя останавливать пайплайн с просьбой «откройте и отредактируйте `site.inv`». Если не хватает полей — задай короткий список вопросов в чате, получи ответы, **сам** допиши файл, затем продолжай.
+- Секреты (пароли, FTP/SSH, SMTP) по-прежнему только в `teya-memory/teya.env.local` — их пользователь может прислать в чат; бот кладёт в env.local, не в git.
+
+### Ключевые слова и карта URL — без Ядрышко
+
+- Хелпер **Ядрышко** / `core` / `yadryshko` **исключён из пайплайна**. Не вызывай `Task(core)`, `Task(yadryshko)`, skill `yadryshko-semantic-core`.
+- **Запрещено** вызывать Wordstat через MCP-KV (`wordstat_get_*`, `wordstat_get_user_info`, `wordstat_get_top_requests`) для расширения семантики.
+- **Запрещено** блокировать пайплайн из‑за отсутствия MCP-KV для ключей / Wordstat.
+- MCP-KV **разрешён** для генерации изображений и background removal на этапах AURA / asset packager / Excalibur covers — только не для ключей.
+
+### Откуда берутся ключи
+
+1. Список ключей присылает пользователь или сайтостроитель в чате / файле, **или**
+2. Директор / сайтостроитель сам выбирает рабочий список из brief + research (услуги, ниша, оферы) — без Wordstat.
+
+### Что пишет Директор вместо Ядрышко
+
+Каталог: `teya-memory/semantic-core/manual/` (или `teya-memory/semantic-core/<run-id>/` с пометкой `source: manual`).
+
+Обязательные файлы:
+
+- `04-keywords-clean.csv` — ручной/выбранный список ключей
+- `06-url-map.csv` — карта страниц (URL, intent, priority, primary keyword)
+- `07-content-briefs.md` — краткие брифы страниц из ключей + research
+- `11-blog-topics.md` — темы блога (как раньше, без Wordstat)
+- fragment: `teya-memory/fragments/keywords-url-map.md` с маркером `=== KEYWORDS + URL MAP (MANUAL) ===`
+
+Не требовать `03-wordstat-raw.csv`, HTML/XLSX отчёты Ядрышко, минимальное число Wordstat-вызовов.
+
+Порядок фазы 1: brief + заполнение `site.inv` ботом → research → keywords+URL map → AURA (параллельно или сразу после) → остальной пайплайн.
+
+## EN
+
+- Bot fills `site.inv` from chat brief; never wait for the user to hand-edit the file.
+- No Ядрышко / Wordstat / MCP-KV keyword expansion in the pipeline.
+- Keywords come from the user/сайтостроитель or Director selection; Director writes URL map + briefs under `teya-memory/semantic-core/`.
+- Keep MCP-KV for image generation only.

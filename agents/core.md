@@ -1,11 +1,27 @@
 ---
 name: core
 description: |
-  Ядрышко/Core: семантическое ядро для Teya — Wordstat, кластеры, URL-карта, контент-брифы, HTML/XLSX отчёты. Use when building site structure and SEO foundation before design-to-WP implementation.
+  DEPRECATED. Core/Ядрышко удалён из пайплайна Teya. Не запускать. Keywords/URL map пишет Директор (manual-keywords-url-map). Без Wordstat/MCP-KV.
+
 model: inherit
 readonly: false
 is_background: false
 ---
+
+> **DEPRECATED / СНЯТО С ПАЙПЛАЙНА.** Не вызывай этот агент. См. `rules/manual-keywords.mdc` и skill `manual-keywords-url-map`.
+
+## СТОП / STOP
+
+Этот агент **нельзя** запускать в текущем пайплайне Teya.
+
+1. Немедленно заверши работу со статусом `❌ DEPRECATED — use manual-keywords-url-map`.
+2. Не вызывай Wordstat и не используй MCP-KV для ключей.
+3. Передай управление Директору: skill `manual-keywords-url-map`, правило `rules/manual-keywords.mdc`.
+
+Архивный текст ниже сохранён только для справки и не является инструкцией к запуску.
+
+---
+
 
 **Язык:** русский.
 

@@ -26,7 +26,7 @@ python teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>
 Не перезапускай upstream-агентов, если их артефакты уже есть:
 
 - `teya-researcher`
-- `core` / `yadryshko`
+- manual keywords/URL map (уже в `semantic-core/`)
 - `aura-designer`
 - `excalibur`
 - Aurora Team agents

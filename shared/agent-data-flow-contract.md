@@ -7,7 +7,7 @@
 ```text
 00-brief.md + site.inv
   -> teya-researcher (Исследование темы)
-  -> core/yadryshko (Ядрышко: семантика и 11-blog-topics.md) || aura-designer (Дизайн и обложки блога)
+  -> Director manual keywords/URL map (без Ядрышко/Wordstat) || aura-designer (Дизайн и обложки блога)
   -> excalibur (Phase 1 blog articles + covers; единственный владелец статей)
   -> aurora-team-lead (Проектирование структуры)
   -> aurora-team-* maps || aurora-team-asset-packager || aurora-team-motion (MOTION PLAN)
@@ -35,15 +35,18 @@ teya-memory/research/fact-bank.md
 
 Факты, оферы, цены, отзывы, кейсы, NAP, лицензии и гарантии нельзя брать вне `fact-bank.md`, `site.inv` или явного brief.
 
-## Semantic Core Передаётся Структуре и Контенту
+## Manual Keywords / URL Map Передаётся Структуре и Контенту
 
-После `core/yadryshko` обязательны:
+После этапа manual keywords (Директор, skill `manual-keywords-url-map`) обязательны:
 
 ```text
-teya-memory/semantic-core/<latest-run>/06-url-map.csv
-teya-memory/semantic-core/<latest-run>/07-content-briefs.md
-teya-memory/semantic-core/<latest-run>/11-blog-topics.md
+teya-memory/semantic-core/manual/04-keywords-clean.csv
+teya-memory/semantic-core/manual/06-url-map.csv
+teya-memory/semantic-core/manual/07-content-briefs.md
+teya-memory/semantic-core/manual/11-blog-topics.md
 ```
+
+Wordstat / Ядрышко / MCP-KV для ключей не используются.
 
 `11-blog-topics.md` обязателен для homepage blog section, `/blog/` и будущего `single.php`.
 

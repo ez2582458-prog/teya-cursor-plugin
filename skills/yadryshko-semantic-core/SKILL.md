@@ -1,6 +1,6 @@
 ---
 name: yadryshko-semantic-core
-description: Ядрышко/Core для Teya — Wordstat, SEO/GEO семантика, кластеры, URL map, content briefs, HTML/XLSX отчёты. Используй для subagent core/yadryshko перед AURA Team и Aurora.
+description: DEPRECATED — Ядрышко снято с пайплайна. Не использовать. Вместо этого skill `manual-keywords-url-map` и rules/manual-keywords.mdc.
 ---
 
 # Ядрышко / Core Semantic Core

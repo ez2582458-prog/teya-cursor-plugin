@@ -1,7 +1,7 @@
 {
   "name": "teya",
   "displayName": "Teya",
-  "description": "Автономный E2E-плагин: Research, Ядрышко, AURA visual replication, Aurora Team, Anti-Haltura gates, Design Guardian, WordPress-тема, SEO/GEO, FTP-деплой. Оркестратор + teya-memory.",
+  "description": "Автономный E2E-плагин: Research, ручные ключи/URL-карта (без Ядрышко/Wordstat), AURA visual replication, Aurora Team, Anti-Haltura gates, Design Guardian, WordPress-тема, SEO/GEO, FTP-деплой. Оркестратор + teya-memory.",
   "version": "0.1.0",
   "keywords": [
     "wordpress",
@@ -11,7 +11,7 @@
     "competitor-analysis",
     "offer-research",
     "fact-bank",
-    "yadryshko",
+    "manual-keywords",
     "aura",
     "aurora-team",
     "design-guardian",
@@ -45,7 +45,7 @@
     "blog-covers",
     "blog-cover-concept",
     "blog-publish",
-    "semantic-core",
+    "manual-url-map",
     "seo-geo",
     "indexing",
     "local-seo",

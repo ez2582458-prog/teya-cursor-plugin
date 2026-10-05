@@ -16,7 +16,7 @@ is_background: false
 Ты собираешь и выкладываешь **полноценную WordPress-тему** на основе:
 
 1. **Research** — `teya-memory/research/site-research-dossier.md`, `competitors.csv`, `offers-map.md`, `audience-map.md`, `fact-bank.md`
-2. **Ядрышко** — `teya-memory/semantic-core/<run>/` (`06-url-map.csv`, `07-content-briefs.md`, `05-clusters.csv`)
+2. **Manual keywords/URL map** — `teya-memory/semantic-core/manual/` (`06-url-map.csv`, `07-content-briefs.md`, опционально `05-clusters.csv`)
 3. **AURA** — `teya-memory/design/AURADESIGN.md` и связанные файлы
 4. **Aurora Team** — `teya-memory/wp/aurora-team-blueprint.md`, `page-content-pack.md`, `navigation-linking-map.md`, `schema-technical-seo-map.md`, `indexing-crawl-map.md`, `local-entity-map.md`, `performance-accessibility-map.md`, `conversion-tracking-map.md`, `security-release-map.md`
 5. **Brief** — `teya-memory/00-brief.md` (контакты, бренд, ограничения)

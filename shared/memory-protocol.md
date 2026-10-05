@@ -26,15 +26,14 @@ python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT>
 
 ```text
 teya-memory/
-├── site.inv                    # Structured intake from user (local/private)
+├── site.inv                    # Structured intake — filled by Director/bot from chat (local/private)
 ├── site.inv.example            # Safe template
 ├── teya.env.local              # Private secrets: WP, hosting, SMTP, analytics (do not commit)
 ├── teya.env.example            # Safe env template
 ├── 00-brief.md                 # Вход пользователя (контакты, референс, контент)
 ├── 01-handoff.md               # Склейка Директором (маркеры этапов)
 ├── fragments/                  # Параллельные записи (без гонок)
-│   ├── core.md                  # Ядрышко/Core, основной файл
-│   ├── yadryshko.md             # alias для совместимости
+│   ├── keywords-url-map.md      # manual keywords + URL map (вместо Ядрышко)
 │   ├── teya-researcher.md
 │   ├── aura.md
 │   ├── aurora-team-lead.md
@@ -55,7 +54,7 @@ teya-memory/
 │   ├── offers-map.md
 │   ├── audience-map.md
 │   └── fact-bank.md
-├── semantic-core/               # Ядрышко: полный пакет исследования
+├── semantic-core/               # manual keywords + URL map (без Wordstat/Ядрышко)
 │   └── <run-folder>/           # index.html, csv, xlsx, briefs...
 ├── design/                     # AURA: DESIGN.md и deliverables
 │   ├── AURADESIGN.md
@@ -168,9 +167,9 @@ teya-memory/research/competitors.csv
 teya-memory/research/offers-map.md
 teya-memory/research/audience-map.md
 teya-memory/research/fact-bank.md
-teya-memory/semantic-core/<latest-run>/06-url-map.csv
-teya-memory/semantic-core/<latest-run>/07-content-briefs.md
-teya-memory/semantic-core/<latest-run>/11-blog-topics.md
+teya-memory/semantic-core/manual/06-url-map.csv
+teya-memory/semantic-core/manual/07-content-briefs.md
+teya-memory/semantic-core/manual/11-blog-topics.md
 teya-memory/design/AURADESIGN.md
 teya-memory/design/AURA_PAGE_PLAN.md
 teya-memory/design/AURA_SOURCE_DECOMPOSITION.json
@@ -188,7 +187,7 @@ teya-memory/design/AURA_VISUAL_DIFF.md
 teya-memory/design/AURA_REVIEWER_PASS.md
 teya-memory/design/AURA_VISUAL_QA.md
 teya-memory/design/AURA_LINT_REPORT.md
-teya-memory/fragments/core.md или teya-memory/fragments/yadryshko.md
+teya-memory/fragments/keywords-url-map.md
 teya-memory/fragments/aura.md
 teya-memory/wp/aurora-team-blueprint.md
 teya-memory/wp/page-content-pack.md
@@ -201,9 +200,9 @@ teya-memory/wp/conversion-tracking-map.md
 teya-memory/wp/security-release-map.md
 ```
 
-Если `core.md` и `yadryshko.md` существуют одновременно, актуальным считается более новый файл; при склейке в handoff оставь один блок `=== ЯДРЫШКО (СЕМАНТИКА) ===`.
+При склейке в handoff используй маркер `=== KEYWORDS + URL MAP (MANUAL) ===`. Устаревшие `core.md`/`yadryshko.md` не создавать.
 
-## Gate-файлы перед Ядрышком/AURA
+## Gate-файлы перед keywords/URL map и AURA
 
 Директор не запускает `core`/`yadryshko` и `aura-designer`, пока не создан pre-start research:
 
@@ -247,7 +246,7 @@ teya-memory/fragments/aurora-team-design-guardian.md
 
 ## Intake `.inv`
 
-`site.inv` is the structured source of truth for user-provided data:
+`site.inv` is the structured source of truth for business/design/content data. **The Director/bot fills it from chat** — the user does not hand-edit the file (`rules/manual-keywords.mdc`).
 
 - business and contacts;
 - design reference;
@@ -274,7 +273,7 @@ Before remote deployment, validate:
 python teya/scripts/validate_teya_inv.py --path <PROJECT_ROOT>/teya-memory/site.inv
 ```
 
-If validation fails, the Director must ask the user to fill the missing fields or continue only in local build mode.
+If validation fails, the Director asks for missing fields **in chat**, writes them into `site.inv` himself, or continues only in local build mode.
 
 ## Сброс новой сессии
 
@@ -292,8 +291,8 @@ python teya/scripts/prepare_teya_memory.py --project-root <PROJECT_ROOT> --reset
 ## Пути
 
 - `<PROJECT_ROOT>` — корень workspace, не абсолютные `C:\Users\...`
-- Ядрышко/Core: основной Task name `core`; alias `yadryshko`
-- Ядрышко: методология в `vendor/yadryshko/docs/` внутри плагина или `<PROJECT_ROOT>/teya/vendor/yadryshko/docs/`
+- keywords/URL map: пишет Директор (skill `manual-keywords-url-map`); Task(`core`)/`yadryshko` сняты с пайплайна
+- см. `rules/manual-keywords.mdc`
 - AURA skills: `skills/aura-cyrillic-google-fonts`, `skills/aura-shape-replication`
 
 ## Секреты

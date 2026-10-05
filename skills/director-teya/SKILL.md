@@ -1,6 +1,6 @@
 ---
 name: director-teya
-description: Директор Teya — фаза 1: Research → Ядрышko||AURA → Aurora Team Lead → 8 parallel Aurora Team agents → Aurora → Design Guardian → QA.
+description: Директор Teya — фаза 1: Research → manual keywords/URL map || AURA → Aurora Team Lead → 8 parallel Aurora Team agents → Aurora → Design Guardian → QA.
 ---
 
 # Директор Teya — фаза 1
@@ -15,14 +15,14 @@ description: Директор Teya — фаза 1: Research → Ядрышko||AU
 ## Цепочка
 
 ```text
-Brief → teya-researcher → research gate → [core/Ядрышко ║ aura-designer] → merge → aurora-team-lead → [content ║ navigation ║ schema ║ indexing ║ local-entity ║ performance-a11y ║ conversion ║ security-release] → content gate → aurora → content-completeness gate → aurora-team-design-guardian → aurora-team-qa → URL
+Brief + bot fills site.inv → teya-researcher → research gate → [manual keywords/URL map ║ aura-designer] → merge → aurora-team-lead → [content ║ navigation ║ schema ║ indexing ║ local-entity ║ performance-a11y ║ conversion ║ security-release] → content gate → aurora → content-completeness gate → aurora-team-design-guardian → aurora-team-qa → URL
 ```
 
 ## Параллель (безопасно)
 
 | Пара | Почему |
 |------|--------|
-| **Ядрышko \|\| AURA** | Независимые выходы; общий brief + research dossier |
+| **manual keywords/URL map || AURA** | Ключи вручную или выбор Директора; AURA независима; общий brief + research |
 | **aurora-team-content \|\| aurora-team-navigation \|\| aurora-team-schema \|\| aurora-team-indexing \|\| aurora-team-local-entity \|\| aurora-team-performance-a11y \|\| aurora-team-conversion \|\| aurora-team-security-release** | Все читают blueprint и готовят разные WP-артефакты |
 
 Пишут в **разные** fragments. Директор склеивает.
@@ -75,18 +75,19 @@ Aurora Team Lead и Aurora не запускают вложенные subagents.
 - нестандартные шейпы/переходы секций из AURA/source заменены generic прямыми блоками;
 - Design Guardian не дал `✅ DESIGN OK`.
 
-Перед первым запуском направь пользователя в `/teya-start` или `docs/00-first-contact.md`.
+Перед первым запуском используй `/teya-start`: собери данные в чате и сам заполни `site.inv` (не жди ручного редактирования файла).
 
-Обязательные пользовательские файлы:
+Обязательные файлы (бот пишет сам из чата):
 
-- `teya-memory/site.inv` — данные бизнеса, дизайна, контента и разрешения.
+- `teya-memory/site.inv` — данные бизнеса, дизайна, контента и разрешения. **Пользователь не правит файл руками** — Директор заполняет из брифа в чате (`rules/manual-keywords.mdc`).
 - `teya-memory/teya.env.local` — приватные доступы к WordPress, FTP/SFTP/SSH, SMTP, аналитике и webhook. Не коммитить.
 
 ## Skills
 
-- `teya-researcher` — обязательный pre-start research перед `core`/`aura-designer`.
-- `yadryshko-semantic-core` — обязательно для `core` / `yadryshko`.
+- `teya-researcher` — обязательный pre-start research перед keywords/URL map и `aura-designer`.
+- `manual-keywords-url-map` — вместо Ядрышко: ручные ключи + URL-карта без Wordstat/MCP-KV.
 - `aura-designer` — обязательно для `aura-designer`.
+- `yadryshko-semantic-core` / `core` / `yadryshko` — **сняты с пайплайна**; не вызывать.
 - `aura-shape-replication`, `aura-cyrillic-google-fonts` — вспомогательные skills AURA для дизайн-референсов, шейпов, переходов секций и кириллицы.
 - `aurora` и `wp-theme-builder` — для WP-интеграции.
 - `aurora-team-design-guardian` — обязательный дизайн-gate после Aurora и до финального QA.
@@ -96,7 +97,7 @@ Aurora Team Lead и Aurora не запускают вложенные subagents.
 
 - `=== BRIEF (ВХОД) ===`
 - `=== TEYA-RESEARCHER (ГЛУБОКИЙ РЕСЁРЧ) ===`
-- `=== ЯДРЫШКО (СЕМАНТИКА) ===`
+- `=== KEYWORDS + URL MAP (MANUAL) ===`
 - `=== AURA (ДИЗАЙН) ===`
 - `=== AURORA-TEAM-LEAD (СТРУКТУРА) ===`
 - `=== AURORA-TEAM-CONTENT (SEO/GEO ТЕКСТЫ) ===`

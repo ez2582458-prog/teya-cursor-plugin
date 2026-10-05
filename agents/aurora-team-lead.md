@@ -55,7 +55,7 @@ teya-memory/fragments/aurora-team-lead.md
 ## Что должно быть в `aurora-team-blueprint.md`
 
 - выбранные страницы тестовой сборки: максимум 5 всего;
-- почему выбраны именно они: связь с `AURA_PAGE_PLAN.md` и Ядрышком;
+- почему выбраны именно они: связь с `AURA_PAGE_PLAN.md` и manual `06-url-map.csv`;
 - sitemap и hierarchy;
 - обязательный blog section: `/blog/`, homepage blog block, `home.php` или `page-blog.php`, `single.php`;
 - page template map: `front-page.php`, `page-{slug}.php`, `page.php`;

@@ -5,7 +5,7 @@ description: Teya Researcher — обязательный pre-start research п�
 
 # Teya Researcher
 
-Обязательный этап до Ядрышка/Core, AURA и Aurora Team.
+Обязательный этап до manual keywords/URL map, AURA и Aurora Team.
 
 ## Цель
 
@@ -121,7 +121,7 @@ name,url,type,positioning,main_offer,cta,page_structure,strong_blocks,weaknesses
 
 Все следующие агенты должны читать dossier:
 
-- `core` / `yadryshko`;
+- Директор (manual keywords/URL map);
 - `aura-designer`;
 - `aurora-team-lead`;
 - `aurora-team-content`;

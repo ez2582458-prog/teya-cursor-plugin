@@ -86,7 +86,7 @@ teya-memory/fragments/aura.md
 - design reference: URL, screenshot, image path или текстовое описание
 - brand constraints: цвет, tone of voice, запреты, конкуренты
 
-Если параллельно уже есть Ядрышко, AURA может прочитать только контекстные ограничения, но не должна подменять SEO-решения.
+Если уже есть manual URL map, AURA может прочитать только контекстные ограничения, но не должна подменять SEO-решения.
 
 ## Обязательные Deliverables
 
@@ -145,7 +145,7 @@ Blog covers: **сначала концепт** (`blog-cover-brand-concept.md` + 
 
 Файл обязателен для Aurora.
 
-Он описывает **дизайн-план страниц**, а не семантическое ядро.
+Он описывает **дизайн-план страниц**, а не SEO/URL-карту.
 
 Формат:
 
@@ -174,7 +174,7 @@ Blog covers: **сначала концепт** (`blog-cover-brand-concept.md` + 
 - responsive_notes: ...
 - motion_notes: ...
 - aura_requirements: ...
-- semantic_notes_for_aurora: что нужно сверить с Ядрышком
+- semantic_notes_for_aurora: что нужно сверить с manual URL map
 ```
 
 Если страниц нужно больше, пометь только 5 как `build_in_test: yes`, остальные отдай в backlog.
