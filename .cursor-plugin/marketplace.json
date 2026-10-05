@@ -1,0 +1,17 @@
+{
+  "name": "teya-ez2582458",
+  "owner": {
+    "name": "ez2582458-prog"
+  },
+  "metadata": {
+    "description": "Teya fork (ez2582458-prog) — single-plugin marketplace for Cursor (IDE + Cloud Agents)",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "teya",
+      "source": "./",
+      "description": "Teya: автономный E2E-пайплайн сайтов (Research, AURA, Aurora Team, WordPress, Excalibur, release gates). Форк с ручными ключами без Ядрышко/Wordstat."
+    }
+  ]
+}
