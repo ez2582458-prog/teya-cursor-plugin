@@ -36,7 +36,7 @@ teya-memory/fragments/aurora-team-motion.md
 
 План должен объяснить, где используется CSS, где GSAP, где Three.js, и почему. Для каждого эффекта дай selectors/hooks, trigger, fallback, reduced-motion и performance budget.
 
-Teya по умолчанию ожидает не декоративный fade-only motion, а production wow-motion: GSAP для timelines/ScrollTrigger и минимум одну осмысленную Three.js/WebGL/canvas-сцену в hero или storytelling-блоке, если пользователь не запретил 3D. `threejs_scene_status: not_used` допустим только при явном запрете/жёстком performance blocker, и тогда статус должен быть `MOTION THREEJS BLOCKER`, не `MOTION READY`.
+Teya ожидает осмысленный production motion (GSAP/ScrollTrigger или CSS), а не пустой fade-only. **Three.js/WebGL — только где оправдано**: brief или AURA-дизайн явно требует 3D/wow-сцену и есть бюджет performance/a11y. Для типовых сайтов услуг Three.js не обязателен: `threejs_scene_status: not_used` + причина = валидный `MOTION READY`. `MOTION THREEJS BLOCKER` — только если Three.js требуется brief/motion map, но не может быть реализован.
 
 ## MOTION IMPLEMENT
 

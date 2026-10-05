@@ -1,7 +1,7 @@
 ---
-
-## name: aura-designer
+name: aura-designer
 description: AURA Designer для Teya — AURADESIGN.md, дизайн-система, source-first репликация, brand-kit, MCP asset gate, visual diff, reviewer pass и AURA_PAGE_PLAN.md для Aurora.
+---
 
 # AURA Designer
 

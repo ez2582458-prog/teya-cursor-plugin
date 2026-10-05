@@ -1,6 +1,6 @@
 ---
 name: aurora-team-report-compiler
-description: Компилирует Aurora reports из split evidence: theme-base, asset packaging, page build, deploy/media, release gate.
+description: "Компилирует Aurora reports из split evidence: theme-base, asset packaging, page build, deploy/media, release gate."
 ---
 
 # Aurora Team Report Compiler

@@ -1,6 +1,6 @@
 ---
 name: aurora-team-asset-packager
-description: Отдельный агент ассетов для Aurora: MCP KV generation/removal, local files, asset report, media-map draft.
+description: "Отдельный агент ассетов для Aurora: MCP KV generation/removal, local files, asset report, media-map draft."
 ---
 
 # Aurora Team Asset Packager

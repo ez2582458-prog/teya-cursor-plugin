@@ -54,7 +54,7 @@ def validate_theme_images(theme_local: Path) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-root", required=True)
-    parser.add_argument("--theme-slug", default="teya-kovcheg")
+    parser.add_argument("--theme-slug", required=True, help="Theme folder name under teya-memory/wp/theme/ (from site.inv / blueprint)")
     args = parser.parse_args()
 
     root = Path(args.project_root).resolve()

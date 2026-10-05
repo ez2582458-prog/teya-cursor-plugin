@@ -1,6 +1,6 @@
 ---
 name: aurora-team-qa
-description: Aurora Team QA — проверка готовой темы и страниц: WP, SEO/GEO, schema, меню, перелинковка, дизайн, live/deploy.
+description: "Aurora Team QA — проверка готовой темы и страниц: WP, SEO/GEO, schema, меню, перелинковка, дизайн, live/deploy."
 ---
 
 # Aurora Team QA

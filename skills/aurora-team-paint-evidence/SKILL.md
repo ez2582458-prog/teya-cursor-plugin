@@ -1,6 +1,6 @@
 ---
 name: aurora-team-paint-evidence
-description: Собирает browser paint evidence: screenshots 1440/375, network CSS/JS/images, broken assets, computed styles.
+description: "Собирает browser paint evidence: screenshots 1440/375, network CSS/JS/images, broken assets, computed styles."
 ---
 
 # Aurora Team Paint Evidence

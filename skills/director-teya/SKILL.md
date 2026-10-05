@@ -1,6 +1,6 @@
 ---
 name: director-teya
-description: Директор Teya — фаза 1: Research → manual keywords/URL map || AURA → Aurora Team Lead → 8 parallel Aurora Team agents → Aurora → Design Guardian → QA.
+description: "Директор Teya — фаза 1: Research → manual keywords/URL map || AURA → Aurora Team Lead → 8 parallel Aurora Team agents → Aurora → Design Guardian → QA."
 ---
 
 # Директор Teya — фаза 1

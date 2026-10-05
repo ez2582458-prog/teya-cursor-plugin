@@ -11,18 +11,9 @@ from typing import Any
 
 from teya_release_gate import IMAGE_EXTENSIONS, validate_image_file
 
-# Fallback alts when registry omits alt_text (kovcheg-kids defaults).
-DEFAULT_ALT_BY_FILE: dict[str, str] = {
-    "hero-mascot-kovcheg.png": "Робот Ковчег — маскот школы вайбкодинга",
-    "benefit-yellow-ai-safe.png": "Ребёнок за ноутбуком с иконками безопасного AI",
-    "benefit-green-projects.png": "Скриншоты детских мини-игр и приложений",
-    "benefit-pink-demo-day.png": "Demo Day — презентация проекта",
-    "form-robot-wave.png": "Робот Ковчег приглашает на пробное занятие",
-    "blog-thumb-ai-safety.png": "Щит и детский ноутбук",
-    "program-roadmap-12w.png": "Инфографика 12 недель и 4 модулей",
-    "blog-thumb-b01.png": "Иллюстрация ребёнка и AI-редактора",
-    "blog-thumb-b03.png": "Коллаж детских проектов",
-}
+# Fallback alts when registry omits alt_text. Intentionally empty: alt text must come
+# from AURA_ASSET_REGISTRY.json for the current site (no leftovers from other projects).
+DEFAULT_ALT_BY_FILE: dict[str, str] = {}
 
 
 def _iso_now() -> str:

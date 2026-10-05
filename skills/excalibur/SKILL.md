@@ -1,8 +1,8 @@
 ---
-
-## name: excalibur
+name: excalibur
 description: |
   Excalibur — SEO/GEO статьи блога Teya по 11-blog-topics.md; research gate, human longread 8.5–9.5k, GEO QA, schema JSON-LD, обложки MCP по AURA concept. Sub-skills excalibur-research, excalibur-geo-qa.
+---
 
 # Excalibur — SEO/GEO статьи блога
 
@@ -10,7 +10,7 @@ description: |
 
 Excalibur пишет **полноценные статьи** для блога сайта Teya:
 
-- семантика — Ядрышko (`11-blog-topics.md`);
+- семантика — `11-blog-topics.md` (из брифа / manual keywords, без Ядрышко);
 - фактура — research + fact-bank;
 - текст — human SEO/GEO longread;
 - QA — GEO self-check + AI-slop scan;
@@ -19,11 +19,11 @@ Excalibur пишет **полноценные статьи** для блога �
 
 Excalibur **не** меняет дизайн, **не** собирает семантику и **не** заменяет Aurora. Но статьи блога и их publish handoff в Phase 1 принадлежат только Excalibur.
 
-Excalibur — обязательный Phase 1 writer для блога. Он запускается Директором сразу после Core + AURA, когда готовы `11-blog-topics.md`, research/fact-bank и `AURA_BLOG_COVER_CONCEPT.*`. Если Excalibur не успел, получил QA/COVER blocker или не смог подготовить статьи, он обязан записать `EXCALIBUR PHASE1 DEFERRED`, но не разрешать другим агентам писать статьи вместо себя.
+Excalibur — обязательный Phase 1 writer для блога. Он запускается Директором сразу после manual keywords/URL map + AURA, когда готовы `11-blog-topics.md`, research/fact-bank и `AURA_BLOG_COVER_CONCEPT.*`. Если Excalibur не успел, получил QA/COVER blocker или не смог подготовить статьи, он обязан записать `EXCALIBUR PHASE1 DEFERRED`, но не разрешать другим агентам писать статьи вместо себя.
 
 ## Когда запускать
 
-Excalibur запускается в Phase 1 сразу после Core/AURA. До старта обязательны:
+Excalibur запускается в Phase 1 сразу после manual keywords/URL map + AURA. До старта обязательны:
 
 ```text
 teya-memory/research/site-research-dossier.md
@@ -34,7 +34,7 @@ teya-memory/design/AURA_BLOG_COVER_CONCEPT.json
 teya-memory/design/AURA_BLOG_COVER_PROMPTS.json
 ```
 
-Если этих артефактов нет, Excalibur обязан остановиться со статусом `EXCALIBUR PHASE1 BLOCKER: missing Core/AURA/research inputs`, записать причину в run log/fragment и вернуть управление Директору.
+Если этих артефактов нет, Excalibur обязан остановиться со статусом `EXCALIBUR PHASE1 BLOCKER: missing keywords/AURA/research inputs`, записать причину в run log/fragment и вернуть управление Директору.
 
 Если WP/deploy ещё не готов, Excalibur всё равно пишет локальные статьи, covers, schema и publish handoff. Публикация в WP выполняется в Phase 1 после deploy через `AURORA BLOG INTEGRATOR` / `excalibur-wp-publish`; это не Phase 2b.
 
@@ -90,7 +90,7 @@ Optional external reference (не заменяет Teya HTML contract):
 9. **CTA** — из conversion map, ≤ 3 упоминания.
 10. **Meta & A/B** — `article.meta.json` (с расширенной секцией `meta_ab` для SEO, CTR и AEO).
 11. **GEO QA** — skill `excalibur-geo-qa`: CORE-EEAT lite ≥16/20, `excalibur_link_verify.py` → `link-verify.json`, `teya_excalibur_html_linter.py` → `html-linter-report.json`, `teya_excalibur_slop_detector.py` → `slop-detector-report.json`, `teya_excalibur_cannibalization_guard.py` → `cannibalization-report.json`.
-12. **Schema** — `schema.jsonld` (создание расширенных схем `BlogPosting`, `FAQPage`, `HowTo`, `Review`/`Product` + SameAs эксперта, выбранного из реестра `teya/shared/authors-registry.json`).
+12. **Schema** — `schema.jsonld` (`BlogPosting`, `FAQPage`, при необходимости `HowTo`/`Product`). Автор: только реальный из `authors-registry.json` или Organization/«Редакция сайта». **Без** выдуманного Person/sameAs и **без** `Review`/`AggregateRating`/`reviewRating` без fact-bank.
 13. **Promotion** — `promotion-checklist.md` из template.
 14. **Cover** — prefix + scene + suffix из AURA concept → MCP → `cover/cover.png`.
 15. **Interlink** — `teya_excalibur_interlinker.py --apply` для контекстной перелинковки с использованием диверсифицированных фраз `"anchor_variants"`.
@@ -117,7 +117,7 @@ teya-memory/blog/articles/<topic_id>-<slug>/
   slop-detector-report.json # удобочитаемость Flesch и ИИ-клише
   fact-check-report.json  # результат авто-проверки фактов
   cannibalization-report.json # результат проверки каннибализации ключевых слов
-  schema.jsonld           # расширенные схемы BlogPosting, FAQPage, HowTo, Review
+  schema.jsonld           # BlogPosting, FAQPage, HowTo/Product; без фейковых Review/AggregateRating
   promotion-checklist.md  # чеклист дистрибуции и перелинковки
   wp-publish-result.json  # опционально
   cover/cover.png

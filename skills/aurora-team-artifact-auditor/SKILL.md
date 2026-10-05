@@ -1,6 +1,6 @@
 ---
 name: aurora-team-artifact-auditor
-description: Проверяет готовность всех входных артефактов перед Aurora split build: research, core, AURA, Aurora Team maps, visual contracts, blog slot.
+description: "Проверяет готовность всех входных артефактов перед Aurora split build: research, core, AURA, Aurora Team maps, visual contracts, blog slot."
 ---
 
 # Aurora Team Artifact Auditor

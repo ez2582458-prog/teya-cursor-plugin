@@ -151,7 +151,8 @@ page_slug:
 - выдуманные имена;
 - выдуманные цитаты;
 - выдуманные рейтинги;
-- schema Review/AggregateRating без реальных данных.
+- schema Review/AggregateRating/`reviewRating` без реальных данных из fact-bank (в т.ч. запрещены шаблонные оценки вроде 4.8/5).
+- выдуманные авторы статей / dummy sameAs URL / «эксперты Teya» вне реального реестра.
 
 ## Технические SEO Блокеры
 

@@ -28,17 +28,17 @@ teya-memory/wp/wp-media-import-log.md
 
 ```json
 {
-  "theme_slug": "teya-kovcheg-kids",
+  "theme_slug": "teya-example-site",
   "public_site_url": "https://example.com/",
   "imported_at": "2026-06-04T00:00:00Z",
   "assets": [
     {
-      "registry_id": "hero-mascot-kovcheg",
-      "file": "hero-mascot-kovcheg.png",
-      "local_source_path": "teya-memory/wp/theme/teya-kovcheg-kids/assets/images/hero-mascot-kovcheg.png",
+      "registry_id": "hero-main",
+      "file": "hero-main.png",
+      "local_source_path": "teya-memory/wp/theme/teya-example-site/assets/images/hero-main.png",
       "attachment_id": 123,
-      "attachment_url": "https://example.com/wp-content/uploads/2026/06/hero-mascot-kovcheg.png",
-      "alt_text": "Робот Ковчег — маскот школы вайбкодинга",
+      "attachment_url": "https://example.com/wp-content/uploads/2026/06/hero-main.png",
+      "alt_text": "Конкретное описание того, что изображено (по AURA_ASSET_REGISTRY.json)",
       "used_in": ["front-page:hero"]
     }
   ],
@@ -74,7 +74,7 @@ require_once ABSPATH . 'wp-admin/includes/media.php';
 require_once ABSPATH . 'wp-admin/includes/image.php';
 
 $attachment_id = media_handle_sideload($file_array, 0, null, [
-    'post_title' => 'hero-mascot-kovcheg',
+    'post_title' => 'hero-main',
     'post_content' => '',
     'post_excerpt' => '',
 ]);
@@ -86,7 +86,7 @@ if (!is_wp_error($attachment_id)) {
 ### B. WP-CLI (если SSH доступен)
 
 ```bash
-wp media import /path/to/hero-mascot-kovcheg.png --title="hero-mascot-kovcheg" --alt="..." --porcelain
+wp media import /path/to/hero-main.png --title="hero-main" --alt="..." --porcelain
 ```
 
 ### C. WordPress REST API / MCP WordPress tools (если доступны в среде)
@@ -128,7 +128,7 @@ function teya_media_img($registry_id, $attrs = []) {
 }
 ```
 
-В шаблонах для production visuals используй `teya_media_img('hero-mascot-kovcheg', [...])`, а не hardcoded theme URI и не remote URL.
+В шаблонах для production visuals используй `teya_media_img('hero-main', [...])`, а не hardcoded theme URI и не remote URL.
 
 `media-map.json` в теме заполняется при деплое из `teya-memory/wp/wp-media-map.json`.
 

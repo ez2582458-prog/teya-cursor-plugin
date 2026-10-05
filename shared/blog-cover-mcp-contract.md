@@ -80,10 +80,10 @@ Per topic — **сцена внутри концепта**, не новый ст
 ```json
 {
   "topic_id": "B01",
-  "slug": "vajbkoding-dlya-detey",
+  "slug": "kak-vybrat-podryadchika",
   "topic_archetype": "informational",
-  "topic_scene_descriptor": "robot mascot beside laptop, playful learning props, lime blob accent",
-  "cover_alt_text": "Робот и ноутбук — вайбкодинг для детей",
+  "topic_scene_descriptor": "checklist on clipboard beside project blueprint, brand color accent",
+  "cover_alt_text": "Чек-лист и чертёж — как выбрать подрядчика",
   "use_concept_assembly": true,
   "gpt_image_2_prompt": null,
   "assembled_prompt_preview": "optional full string for QA",

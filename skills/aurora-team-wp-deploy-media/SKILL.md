@@ -1,6 +1,6 @@
 ---
 name: aurora-team-wp-deploy-media
-description: Отдельный deploy/media агент: публикация темы, WP Media Library import, attachment IDs, deploy evidence.
+description: "Отдельный deploy/media агент: публикация темы, WP Media Library import, attachment IDs, deploy evidence."
 ---
 
 # Aurora Team WP Deploy Media

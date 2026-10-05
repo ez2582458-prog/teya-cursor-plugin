@@ -1,6 +1,6 @@
 ---
 name: aurora-team-motion
-description: Проектирует и внедряет production-анимации сайта по AURA-дизайну: GSAP timelines/ScrollTrigger, Three.js/WebGL scenes, reduced motion, performance budgets. Use when building Teya/Aurora sites that need animated hero, scroll storytelling, parallax, 3D/WebGL, micro-interactions, or motion QA.
+description: "Проектирует и внедряет production-анимации сайта по AURA-дизайну: GSAP timelines/ScrollTrigger, Three.js/WebGL scenes, reduced motion, performance budgets. Use when building Teya/Aurora sites that need animated hero, scroll storytelling, parallax, 3D/WebGL, micro-interactions, or motion QA."
 ---
 
 # Aurora Team Motion
@@ -52,7 +52,8 @@ teya-memory/fragments/aurora-team-motion.md
 - per-page/per-section animation plan;
 - GSAP timelines: selectors/hooks, labels, triggers, reduced-motion fallback;
 - Three.js scenes only where justified: scene purpose, canvas container, asset needs, DPR, pause rules, mobile fallback;
-- if user brief mentions Three.js/WebGL/3D/cinematic/wow animations, include at least one production Three.js scene or write `MOTION THREEJS BLOCKER` with exact reason; do not mark `MOTION READY` with `threejs_scene_status: not_used`;
+- Three.js is NOT mandatory by default: if brief/design do not require 3D, set `threejs_scene_status: not_used` with reason and `MOTION READY` is allowed;
+- if user brief explicitly requires Three.js/WebGL/3D, include at least one production Three.js scene or write `MOTION THREEJS BLOCKER` with exact reason;
 - implementation hooks/classes that Aurora must preserve;
 - performance budget: no animation blocking LCP, JS defer/dynamic import, transform/opacity only for DOM motion;
 - accessibility: `prefers-reduced-motion`, no flashing, no forced scroll hijack, keyboard/content access without animation.

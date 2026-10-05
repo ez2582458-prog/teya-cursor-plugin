@@ -93,7 +93,7 @@ C01 ✓ ... (18/20)
 ...
 
 ## Schema ready
-BlogPosting: yes | FAQPage: yes (N) | HowTo: yes/no | Review: yes/no | E-E-A-T SameAs Author: yes (N links)
+BlogPosting: yes | FAQPage: yes (N) | HowTo: yes/no | Review/AggregateRating: only if fact-bank | E-E-A-T Author: real registry or Organization/omit (no dummy sameAs)
 ```
 
 ## После QA PASS

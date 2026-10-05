@@ -13,17 +13,16 @@
 PowerShell (symlink, от админа):
 
 ```powershell
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.cursor\plugins\local\teya" -Target "C:\Users\mrrut\Desktop\Teya\teya"
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.cursor\plugins\local\teya" -Target "<ПУТЬ_К_РЕПОЗИТОРИЮ>\teya-cursor-plugin"
 ```
 
 ## 2. Зависимости субагентов
 
-### Ядрышko (Core)
+### Ключи и URL-карта (вручную)
 
-- MCP **user-mcp-kv** с Wordstat (`wordstat_get_top_requests`)
-- Python 3 для скриптов отчётов
-- Skill: `teya/skills/yadryshko-semantic-core/SKILL.md`
-- Vendor reference: `teya/vendor/yadryshko/`
+- Ядрышко / Wordstat **исключены из пайплайна** (устарело). Ключи и список страниц — только из заполненного брифа (`/teya-brief`, `shared/site-brief-template.md`).
+- Rule: `teya/rules/manual-keywords.mdc`; skill: `teya/skills/manual-keywords-url-map/SKILL.md`
+- Python 3 для скриптов проверок
 
 ### AURA
 
@@ -97,16 +96,16 @@ python teya/scripts/validate_teya_env.py --path teya-memory/teya.env.local
 ## 4. Фаза 1 — пайплайн
 
 ```text
-Brief → teya-researcher → research gate → [core/Ядрышко ║ aura-designer] → aurora-team-lead → [content ║ navigation ║ schema ║ indexing ║ local-entity ║ performance-a11y ║ conversion ║ security-release] → content gate → aurora → content-completeness gate → aurora-team-design-guardian → aurora-team-qa
+Brief → teya-researcher → research gate → [manual keywords/URL map из брифа ║ aura-designer] → aurora-team-lead → [content ║ navigation ║ schema ║ indexing ║ local-entity ║ performance-a11y ║ conversion ║ security-release] → content gate → aurora → content-completeness gate → aurora-team-design-guardian → aurora-team-qa
 ```
 
 Команды:
 
+- `/teya-brief` — выдать бриф-шаблон и перенести ответы в `site.inv`
 - `/teya-start` — объяснить пользователю, что заполнить
 - `/teya-phase1` — запустить E2E pipeline
 
-Основное имя Ядрышка в Cursor: `core`.
-Alias в Teya: `yadryshko`.
+Число страниц и статей — из брифа (без потолка «5 страниц»). Типовые внутренние страницы — общий шаблон `page-inner.php`.
 
 Перед WP-сборкой Директор проверяет gate-файлы:
 
@@ -183,5 +182,4 @@ Anti-haltura blockers:
 
 ## Ссылки
 
-- Ядрышko: https://github.com/Horosheff/yadryshko-semantic-core-subagent
 - AURA: https://github.com/Horosheff/aura-designer

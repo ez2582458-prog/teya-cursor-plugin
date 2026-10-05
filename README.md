@@ -1,7 +1,7 @@
 # Teya Cursor Plugin
 
 Teya is an autonomous Cursor plugin for end-to-end website production:
-research, semantic core, AURA visual system, Aurora WordPress build team,
+brief, research, manual keywords/URL map, AURA visual system, Aurora WordPress build team,
 Excalibur blog articles, release gates, paint QA, and WordPress deploy support.
 
 ## Contents
@@ -47,7 +47,7 @@ Start with:
 The current pipeline is split across focused agents:
 
 ```text
-Research -> Core || AURA -> Aurora Team -> Aurora split build
+Brief -> Research -> manual keywords/URL map || AURA -> Aurora Team -> Aurora split build
 -> Deploy/Media -> Report Compiler -> Excalibur -> Blog Integrator
 -> Paint Evidence -> Release Gate -> Design Guardian -> QA
 ```

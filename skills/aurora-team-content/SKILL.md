@@ -1,6 +1,6 @@
 ---
 name: aurora-team-content
-description: Aurora Team Content — SEO/GEO контент-пакет страниц: H1, title, description, секции, FAQ, answer-блоки, CTA и объёмы.
+description: "Aurora Team Content — SEO/GEO контент-пакет страниц: H1, title, description, секции, FAQ, answer-блоки, CTA и объёмы."
 ---
 
 # Aurora Team Content
