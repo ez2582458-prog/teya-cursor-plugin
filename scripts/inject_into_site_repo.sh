@@ -13,7 +13,7 @@
 #   .cursor/agents/*.md        copies of agents/*       (project subagents)
 #   .cursor/commands/*.md      copies of commands/*     (project commands)
 #   AGENTS.md                  block "Cursor Cloud specific instructions (Teya)"
-#   .cursor/environment.json   only if absent: pip deps for teya scripts
+#   .cursor/environment.json   only if absent: teya/scripts/teya_cloud_setup.sh (pip deps + Playwright Chromium)
 set -euo pipefail
 
 SITE="${1:?usage: inject_into_site_repo.sh /path/to/site-repo}"
@@ -87,10 +87,14 @@ ENVJ="$SITE/.cursor/environment.json"
 if [[ ! -f "$ENVJ" ]]; then
   cat > "$ENVJ" <<'JSON'
 {
-  "install": "python3 -m pip install --user --no-cache-dir paramiko pillow || true; python3 teya/scripts/prepare_teya_memory.py --project-root \"$PWD\" || true"
+  "install": "bash teya/scripts/teya_cloud_setup.sh || true"
 }
 JSON
   echo "created .cursor/environment.json"
+elif ! grep -q "teya_cloud_setup.sh\|playwright" "$ENVJ"; then
+  echo "NOTE: $ENVJ exists and does not install Playwright. Add to its install step:"
+  echo "      bash teya/scripts/teya_cloud_setup.sh || true"
+  echo "      (python deps + Playwright Chromium for teya_visual_lint / release gate; see teya/docs/cloud-agents-setup.md)"
 fi
 
 # 5) keep runtime memory/secrets out of git

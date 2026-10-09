@@ -78,6 +78,8 @@ def target_path(theme_dir: Path, media_item: dict[str, Any], registry_item: dict
         return None
 
     raw = raw.replace("\\", "/")
+    if Path(raw).suffix.lower() in {".png", ".jpg", ".jpeg"} and not (media_item.get("keep_png") or registry_item.get("keep_png")):
+        raw = str(Path(raw).with_suffix(".webp")).replace("\\", "/")
     if raw.startswith("teya-memory/"):
         return Path(raw)
     if raw.startswith("assets/"):
@@ -85,10 +87,20 @@ def target_path(theme_dir: Path, media_item: dict[str, Any], registry_item: dict
     return theme_dir / "assets" / "images" / raw
 
 
-def save_as_target_format(data: bytes, dest: Path) -> str:
+def save_as_target_format(data: bytes, dest: Path, role: str = "normal") -> str:
     detected = sniff_image_format(data)
     if not detected:
         raise RuntimeError("downloaded bytes are not a known image format")
+
+    if dest.suffix.lower() == ".webp":
+        from teya_image_optimize import optimize_bytes
+
+        optimize_bytes(data, dest, role)
+        errors = validate_image_file(dest)
+        if errors:
+            dest.unlink(missing_ok=True)
+            raise RuntimeError("; ".join(errors))
+        return detected
 
     suffix = dest.suffix.lower().lstrip(".")
     if suffix == "jpg":
@@ -161,7 +173,7 @@ def main() -> int:
                     raise RuntimeError("; ".join(local_errors) + "; no remote URL for repair")
                 data, evidence = download_url_bytes(remote_url, timeout=20, retries=5, chunk_size=8 * 1024)
                 dest.parent.mkdir(parents=True, exist_ok=True)
-                detected = save_as_target_format(data, dest)
+                detected = save_as_target_format(data, dest, str(media_item.get("role") or registry_item.get("role") or "normal") if str(media_item.get("role") or registry_item.get("role") or "normal") in {"hero", "normal", "thumb"} else "normal")
                 row.update(
                     {
                         "source": "range_download",
@@ -186,6 +198,7 @@ def main() -> int:
                 }
             )
             media_item["local_source_path"] = str(dest.relative_to(root)).replace("\\", "/")
+            media_item["path"] = str(dest.relative_to(theme_dir)).replace("\\", "/")
             media_item["id"] = registry_id
             media_item["registry_id"] = registry_id
             media_item["bytes"] = row["bytes"]

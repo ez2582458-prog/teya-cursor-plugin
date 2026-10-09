@@ -3,7 +3,21 @@
 
 This script exists because text reports are not evidence. A run can only be
 marked successful when local artifacts, media maps, browser/live URL signals
-and paint evidence agree with each other.
+and the gate's OWN browser checks agree with each other.
+
+The verdict is computed only from what this script checks and from the scripts
+it runs itself (teya_visual_lint, teya_content_lint, teya_page_weight,
+teya_site_fact_check, teya_image_optimize --check, teya_favicon --check).
+It never reads its own previous release-gate-report.md and never trusts an
+agent-written "pass" verdict (paint-evidence, DESIGN OK, QA OK).
+
+Modes:
+  --project-root P                      live: checks PUBLIC_SITE_URL (HTTPS)
+  --project-root P --local-url URL      local/preview WordPress (http://127.0.0.1:8080/ or static mirror)
+  --project-root P --no-live            FAILS unless --local-url is given (no site = no checks = no pass)
+  --final                               also requires fresh ✅ DESIGN OK and ✅ QA OK with current theme_hash
+  --theme-hash                          prints the theme hash that guardian/QA must write into their reports
+Exit: 0 PASS, 1 FAIL.
 """
 from __future__ import annotations
 
@@ -275,7 +289,6 @@ def check_report_identity(wp_dir: Path, theme_slug: str, errors: list[str]) -> N
         "asset-transport-report.md",
         "page-build-report.md",
         "artifact-readiness-report.md",
-        "release-gate-report.md",
         "design-integrity-report.md",
         "seo-geo-verification.md",
     )
@@ -505,16 +518,19 @@ def check_paint_evidence(wp_dir: Path, public_url: str, require_live: bool, erro
         if not resolve_local_path(wp_dir.parent.parent, path).is_file():
             errors.append(f"paint evidence screenshot file missing: {path}")
 
-    if str(evidence.get("verdict") or "").lower() != "pass":
-        errors.append("paint evidence verdict is not pass")
+    # An agent-written "pass" is NOT evidence: the gate runs teya_visual_lint.py itself.
+    # An agent-written "fail" still blocks (the agent saw a problem).
+    verdict = str(evidence.get("verdict") or "").lower()
+    if verdict and verdict != "pass":
+        errors.append(f"paint evidence verdict is {verdict!r} (agent saw a problem)")
 
 
-def check_live(public_url: str, theme_slug: str, theme_dir: Path, errors: list[str]) -> None:
+def check_live(public_url: str, theme_slug: str, theme_dir: Path, errors: list[str], require_https: bool = True) -> None:
     if not public_url:
         return
 
     parsed = urllib.parse.urlparse(public_url)
-    if parsed.scheme != "https":
+    if require_https and parsed.scheme != "https":
         errors.append(f"public_site_url must be HTTPS for published success: {public_url}")
 
     details = fetch_url_details(public_url)
@@ -606,21 +622,232 @@ def check_https_canonical(wp_dir: Path, public_url: str, errors: list[str]) -> N
             errors.append(f"WordPress canonical URL is HTTP, expected HTTPS: {observed}")
 
 
+# --------------------------------------------------------------------------------------
+# Gate-owned checks: scripts, report scan, theme hash, favicon.
+# --------------------------------------------------------------------------------------
+SCRIPTS_DIR = Path(__file__).resolve().parent
+GATE_REPORT = "release-gate-report.md"
+# Status words are matched case-sensitively (BLOCKER / FAIL in caps = a verdict, "blocker" in prose = a rule).
+NEGATIVE_LINE = re.compile(
+    r"(❌\s*\**\s*(?:[A-ZА-ЯЁ-]+\s+){0,2}(?:BLOCKER|BLOCKED|FAIL|НЕ\s*ГОТОВ)"
+    r"|\bFAIL(?:ED)?\b"
+    r"|\*\*\s*(?:[A-ZА-ЯЁ-]+\s+){0,2}BLOCKER\b"
+    r"|(?i:(?:Статус|Status|Verdict|Вердикт|Итог)\s*\**\s*:\s*\**\s*❌)"
+    r"|(?i:Ready[^\n|]{0,40}\|\s*\**\s*(?:no|нет)\b))"
+)
+NOT_A_FINDING = re.compile(
+    r"((?i:\b(?:no|not|нет|без|none|никаких)\b)\W{0,4}`?\s*❌|BLOCKER\**\s*:\s*\**\s*(?i:none|нет)\b|(?i:\bno\s+`?\S*\s*BLOCKER)"
+    r"|(?i:\b(?:если|if|when|любой|any|должен|должна|must|ставь|запрещено|иначе|otherwise|например|e\.g\.)\b))"
+)
+RESOLVED_LINE = re.compile(r"(исправлен|устранен|устранён|fixed|resolved|закрыт|было\s*:|до\s+исправления|history|история)", re.I)
+POSITIVE_STATUS = re.compile(
+    r"((?:Статус|Status|Verdict|Вердикт|Итог)\s*\**\s*:?\s*\**\s*(?:✅\s*(?:[A-Z]+\s+)?OK|PASS\b|READY\b|published_and_configured))"
+    r"|^#+\s*✅\s*(?:DESIGN|QA)\s+OK",
+    re.I | re.M,
+)
+SCANNED_REPORT_DIRS = ("wp", "fragments")
+SKIP_REPORTS = {GATE_REPORT, "aurora-team-release-gate.md"}
+
+
+def theme_hash(theme_dir: Path) -> str:
+    """Short hash of the theme files: guardian/QA reports must quote it (`theme_hash: xxxx`)."""
+    digest = hashlib.sha256()
+    if theme_dir.is_dir():
+        for path in sorted(p for p in theme_dir.rglob("*") if p.is_file()):
+            rel = path.relative_to(theme_dir).as_posix()
+            if rel.startswith((".git/", "node_modules/")):
+                continue
+            digest.update(rel.encode())
+            digest.update(hashlib.sha256(path.read_bytes()).digest())
+    return digest.hexdigest()[:12]
+
+
+def report_hash(text: str) -> str:
+    match = re.search(r"theme_hash\s*[:=]\s*`?([0-9a-f]{8,64})", text)
+    return match.group(1)[:12] if match else ""
+
+
+def scan_reports(project_root: Path, current_hash: str, errors: list[str], warnings: list[str]) -> None:
+    """❌ / BLOCKER / FAIL status lines and contradictions in agent reports block the release.
+
+    Reports stamped with an older theme_hash are stale: only a warning (the gate's own checks decide),
+    but they cannot be used as DESIGN OK / QA OK.
+    """
+    mem = project_root / "teya-memory"
+    files: list[Path] = []
+    for sub in SCANNED_REPORT_DIRS:
+        d = mem / sub
+        if d.is_dir():
+            files += sorted(p for p in d.glob("*.md") if p.name not in SKIP_REPORTS)
+    if (mem / "01-handoff.md").is_file():
+        files.append(mem / "01-handoff.md")
+    for path in files:
+        text = read_text(path)
+        rel = path.relative_to(project_root).as_posix()
+        stamped = report_hash(text)
+        stale = bool(stamped and current_hash and stamped != current_hash)
+        bad_lines = []
+        in_code = False
+        for line in text.splitlines():
+            if line.strip().startswith("```"):
+                in_code = not in_code
+                continue
+            if in_code:
+                continue
+            if NEGATIVE_LINE.search(line) and not RESOLVED_LINE.search(line) and not NOT_A_FINDING.search(line):
+                # rule/template lines like "Статус: ✅ DESIGN OK | ⚠️ ... | ❌ DESIGN BLOCKER" are not findings
+                if line.count("|") >= 2 and "✅" in line and "❌" in line and "DESIGN" in line.upper():
+                    continue
+                bad_lines.append(line.strip()[:160])
+        if not bad_lines:
+            continue
+        msg = f"{rel}: {len(bad_lines)} строк(и) с ❌/BLOCKER/FAIL, например «{bad_lines[0]}»"
+        if stale:
+            warnings.append(f"(устаревший отчёт, theme_hash {stamped} ≠ {current_hash}) {msg}")
+            continue
+        errors.append(msg)
+        if POSITIVE_STATUS.search(text):
+            errors.append(f"{rel}: противоречие — в отчёте одновременно успех (OK/PASS/READY) и ❌/BLOCKER")
+
+
+def check_final_signoff(project_root: Path, current_hash: str, errors: list[str]) -> None:
+    wp_dir = project_root / "teya-memory" / "wp"
+    for name, marker in (("design-integrity-report.md", r"✅\s*DESIGN OK"), ("seo-geo-verification.md", r"✅\s*(QA\s*)?OK")):
+        text = read_text(wp_dir / name)
+        if not text:
+            errors.append(f"--final: нет teya-memory/wp/{name}")
+            continue
+        if not re.search(marker, text):
+            errors.append(f"--final: teya-memory/wp/{name} не содержит {marker.replace(chr(92) + 's*', ' ')}")
+        stamped = report_hash(text)
+        if not stamped:
+            errors.append(f"--final: teya-memory/wp/{name} без `theme_hash:` — нельзя понять, к какой версии темы относится")
+        elif stamped != current_hash:
+            errors.append(f"--final: teya-memory/wp/{name} устарел (theme_hash {stamped} ≠ текущий {current_hash}); после правок проверку надо повторить")
+    shots_note = read_text(wp_dir / "design-integrity-report.md")
+    if shots_note and not re.search(r"(скриншот|screenshot)[^\n]{0,80}(описан|описание|description|вижу)", shots_note, re.I):
+        errors.append("--final: design-integrity-report.md не содержит описаний скриншотов (guardian обязан описать каждый)")
+
+
+def run_tool(name: str, cli: list[str], out_json: Path, results: list[dict[str, Any]], errors: list[str], timeout: int = 900) -> dict[str, Any]:
+    import subprocess
+
+    cmd = [sys.executable, str(SCRIPTS_DIR / name)] + cli
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        code, tail = proc.returncode, (proc.stdout + proc.stderr).strip().splitlines()[-3:]
+    except subprocess.TimeoutExpired:
+        code, tail = 2, [f"timeout after {timeout}s"]
+    data: dict[str, Any] = {}
+    if out_json.is_file():
+        try:
+            data = json.loads(out_json.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            data = {}
+    verdict = str(data.get("verdict") or ("pass" if code == 0 else "fail"))
+    row = {"tool": name, "exit": code, "verdict": verdict, "report": str(out_json), "tail": tail}
+    results.append(row)
+    if code == 2:
+        errors.append(f"{name}: не удалось запустить ({' / '.join(tail)}) — без проверки нет PASS")
+    elif code != 0 or verdict == "fail":
+        errors.append(f"{name}: FAIL — см. {out_json.with_suffix('.md')} ({' / '.join(tail)})")
+    return row
+
+
+def run_site_checks(project_root: Path, theme_dir: Path, url: str, pages_limit: int, errors: list[str],
+                    warnings: list[str], results: list[dict[str, Any]], lighthouse: bool) -> None:
+    qa = project_root / "teya-memory" / "wp" / "qa"
+    qa.mkdir(parents=True, exist_ok=True)
+    root = ["--project-root", str(project_root)]
+    lim = ["--limit", str(pages_limit)]
+    run_tool("teya_visual_lint.py", ["--url", url, *lim, *root, "--out", str(qa / "visual-lint.json")], qa / "visual-lint.json", results, errors)
+    content_cli = ["--url", url, *lim, *root, "--out", str(qa / "content-lint.json")]
+    if theme_dir.is_dir():
+        content_cli += ["--paths", str(theme_dir)]
+    run_tool("teya_content_lint.py", content_cli, qa / "content-lint.json", results, errors)
+    pw_cli = ["--url", url, *lim, *root, "--out", str(qa / "page-weight.json")]
+    if lighthouse:
+        pw_cli.append("--lighthouse")
+    run_tool("teya_page_weight.py", pw_cli, qa / "page-weight.json", results, errors)
+    fact_cli = ["--url", url, *lim, *root, "--out", str(qa / "site-fact-check.json")]
+    if theme_dir.is_dir():
+        fact_cli += ["--paths", str(theme_dir)]
+    row = run_tool("teya_site_fact_check.py", fact_cli, qa / "site-fact-check.json", results, errors)
+    if row["verdict"] == "no_claims":
+        warnings.append("site fact check: 0 утверждений найдено — это НЕ «факты проверены», а «проверять нечего»")
+    if theme_dir.is_dir():
+        run_tool("teya_image_optimize.py", ["--theme", str(theme_dir), "--out", str(qa / "image-optimize.json")], qa / "image-optimize.json", results, errors)
+
+
+def check_favicon(theme_dir: Path, url: str, errors: list[str]) -> None:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+    try:
+        from teya_favicon import check as favicon_check
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"favicon check unavailable: {exc}")
+        return
+    http_url = url if url.startswith(("http://", "https://")) else None
+    for err in favicon_check(theme_dir if theme_dir.is_dir() else None, http_url):
+        errors.append(err)
+
+
+def write_gate_report(project_root: Path, mode: str, target: str, current_hash: str, errors: list[str],
+                      warnings: list[str], results: list[dict[str, Any]]) -> None:
+    from datetime import datetime, timezone
+
+    wp_dir = project_root / "teya-memory" / "wp"
+    wp_dir.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "# Release gate report (written by teya_release_gate.py — do not edit by hand)",
+        "",
+        f"**Verdict:** {'PASS' if not errors else 'FAIL'}  ",
+        f"**Mode:** {mode}  ",
+        f"**Target:** {target or '—'}  ",
+        f"**theme_hash:** {current_hash}  ",
+        f"**Checked at:** {datetime.now(timezone.utc).replace(microsecond=0).isoformat()}",
+        "",
+        "## Script checks (run by the gate itself)",
+        "",
+        "| script | exit | verdict | report |",
+        "| --- | ---: | --- | --- |",
+    ]
+    for row in results:
+        lines.append(f"| {row['tool']} | {row['exit']} | {row['verdict']} | `{row['report']}` |")
+    if errors:
+        lines += ["", "## Errors", ""] + [f"- {e}" for e in errors]
+    if warnings:
+        lines += ["", "## Warnings", ""] + [f"- {w}" for w in warnings]
+    (wp_dir / GATE_REPORT).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate Teya/Aurora release evidence.")
     parser.add_argument("--project-root", default=".", help="Project root containing teya-memory/")
-    parser.add_argument("--no-live", action="store_true", help="Skip network checks for local-only builds.")
+    parser.add_argument("--no-live", action="store_true", help="Do not check PUBLIC_SITE_URL. Requires --local-url, otherwise FAIL.")
+    parser.add_argument("--local-url", help="Local WordPress / preview URL (http://127.0.0.1:8080/, file:// or static mirror dir)")
+    parser.add_argument("--final", action="store_true", help="Final release: require fresh ✅ DESIGN OK and ✅ QA OK with current theme_hash")
+    parser.add_argument("--theme-hash", action="store_true", help="Print current theme_hash and exit")
+    parser.add_argument("--pages-limit", type=int, default=40)
+    parser.add_argument("--lighthouse", action="store_true", help="Also run Lighthouse via teya_page_weight.py")
+    parser.add_argument("--skip-site-scripts", action="store_true", help="Debug only: never gives PASS")
     args = parser.parse_args()
 
     project_root = Path(args.project_root).resolve()
     wp_dir = project_root / "teya-memory" / "wp"
 
     errors: list[str] = []
+    warnings: list[str] = []
+    results: list[dict[str, Any]] = []
     site_spec = read_json(wp_dir / "site-spec.json", errors)
     build_report = read_json(wp_dir / "build-report.json", errors)
     theme_slug = theme_slug_from_reports(site_spec, build_report)
     public_url = public_url_from_reports(site_spec, build_report)
     theme_dir = project_root / "teya-memory" / "wp" / "theme" / theme_slug if theme_slug else Path()
+    current_hash = theme_hash(theme_dir) if theme_slug else ""
+
+    if args.theme_hash:
+        print(current_hash or "no-theme")
+        return 0 if current_hash else 1
 
     if not theme_slug:
         errors.append("cannot determine theme_slug from reports")
@@ -638,18 +865,52 @@ def main() -> int:
         check_media_maps(project_root, wp_dir, theme_dir, errors)
         check_theme_assets(theme_dir, errors)
 
-    require_live = not args.no_live and bool(public_url)
-    check_paint_evidence(wp_dir, public_url, require_live, errors)
-    if require_live:
-        check_live(public_url, theme_slug, theme_dir, errors)
+    if args.local_url:
+        mode, target = "local", args.local_url
+    elif args.no_live:
+        mode, target = "no-live", ""
+        errors.append("--no-live без --local-url: сайт не проверен браузером → PASS невозможен (подними локальный WordPress и передай --local-url)")
+    elif public_url:
+        mode, target = "live", public_url
+    else:
+        mode, target = "none", ""
+        errors.append("нет ни PUBLIC_SITE_URL, ни --local-url: проверять нечего → FAIL")
+
+    check_paint_evidence(wp_dir, public_url, mode == "live", errors)
+    if mode == "live":
+        check_live(public_url, theme_slug, theme_dir, errors, require_https=True)
+    elif mode == "local" and target.startswith(("http://", "https://")):
+        check_live(target, theme_slug, theme_dir, errors, require_https=False)
+
+    if target:
+        if args.skip_site_scripts:
+            errors.append("--skip-site-scripts: браузерные проверки пропущены → PASS невозможен")
+        else:
+            run_site_checks(project_root, theme_dir, target, args.pages_limit, errors, warnings, results, args.lighthouse)
+        check_favicon(theme_dir, target, errors)
+    elif theme_dir.is_dir():
+        check_favicon(theme_dir, "", errors)
+
+    scan_reports(project_root, current_hash, errors, warnings)
+    if args.final:
+        check_final_signoff(project_root, current_hash, errors)
+
+    errors = list(dict.fromkeys(errors))
+    warnings = list(dict.fromkeys(warnings))
+    write_gate_report(project_root, mode + (" final" if args.final else ""), target, current_hash, errors, warnings, results)
 
     if errors:
         print("TEYA RELEASE GATE FAILED")
         for error in errors:
             print(f"- {error}")
+        for warning in warnings:
+            print(f"! {warning}")
+        print(f"theme_hash: {current_hash}")
         return 1
 
-    print("TEYA RELEASE GATE PASS")
+    for warning in warnings:
+        print(f"! {warning}")
+    print(f"TEYA RELEASE GATE PASS (theme_hash: {current_hash})")
     return 0
 
 

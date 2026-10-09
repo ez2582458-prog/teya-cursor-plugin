@@ -16,6 +16,7 @@ from typing import Any
 
 from asset_download import download_url_bytes, probe_url
 from teya_release_gate import sniff_image_format, validate_image_file
+from teya_image_optimize import optimize_bytes, role_for
 
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"}
@@ -79,7 +80,11 @@ def pick_target_path(theme_dir: Path, item: dict[str, Any]) -> Path:
 
     ident = asset_id(item)
     if not raw:
-        raw = f"assets/images/{ident}.png"
+        raw = f"assets/images/{ident}.webp"
+    # Photos and illustrations are shipped as WebP (see shared/site-quality-scripts.md).
+    # PNG is kept only when the registry explicitly says keep_png (pixel-exact logo / tiny UI icon).
+    if Path(raw).suffix.lower() in {".png", ".jpg", ".jpeg"} and not item.get("keep_png"):
+        raw = str(Path(raw).with_suffix(".webp")).replace("\\", "/")
     if raw.startswith("teya-memory/"):
         return Path(raw)
     if raw.startswith("assets/"):
@@ -87,10 +92,25 @@ def pick_target_path(theme_dir: Path, item: dict[str, Any]) -> Path:
     return theme_dir / "assets" / "images" / raw
 
 
-def save_as_target_format(data: bytes, dest: Path) -> str:
+def asset_role(item: dict[str, Any]) -> str:
+    explicit = str(item.get("role") or item.get("size_role") or "").lower()
+    return role_for(f"{asset_id(item)} {item.get('kind') or ''} {item.get('section') or ''}", set(),
+                    explicit if explicit in {"hero", "normal", "thumb"} else None)
+
+
+def save_as_target_format(data: bytes, dest: Path, role: str = "normal") -> str:
     detected = sniff_image_format(data)
     if not detected:
         raise RuntimeError("downloaded bytes have unknown/corrupt image signature")
+
+    if dest.suffix.lower() == ".webp":
+        # Always re-encode: resize to the role's max side, fit the size budget, write -480w/-800w/-1200w variants.
+        optimize_bytes(data, dest, role)
+        errors = validate_image_file(dest)
+        if errors:
+            dest.unlink(missing_ok=True)
+            raise RuntimeError("; ".join(errors))
+        return detected
 
     suffix = dest.suffix.lower().lstrip(".")
     if suffix == "jpg":
@@ -193,7 +213,7 @@ def main() -> int:
 
                 data, evidence = download_url_bytes(remote_url, timeout=20, retries=6, chunk_size=8 * 1024)
                 dest.parent.mkdir(parents=True, exist_ok=True)
-                remote_format = save_as_target_format(data, dest)
+                remote_format = save_as_target_format(data, dest, asset_role(item))
                 row.update(
                     {
                         "source": "range_chunks_8192",
@@ -214,6 +234,14 @@ def main() -> int:
             local_bytes = dest.read_bytes()
             local_format = sniff_image_format(local_bytes)
             width, height = image_dimensions(dest)
+            srcset = []
+            if dest.suffix.lower() == ".webp":
+                for variant in sorted(dest.parent.glob(f"{dest.stem}-*w.webp")):
+                    vw, _vh = image_dimensions(variant)
+                    if vw:
+                        srcset.append({"path": str(variant.relative_to(theme_dir)).replace("\\", "/") if variant.is_relative_to(theme_dir) else str(variant), "width": vw})
+                if srcset:
+                    srcset.append({"path": str(dest.relative_to(theme_dir)).replace("\\", "/") if dest.is_relative_to(theme_dir) else str(dest), "width": width})
             row.update(
                 {
                     "status": "ok",
@@ -253,6 +281,8 @@ def main() -> int:
                     "width": width,
                     "height": height,
                     "download_method": "range_chunks_8192" if row["source"].startswith("range") else "existing_file",
+                    "srcset": srcset,
+                    "role": asset_role(item),
                     "decode_verified": True,
                 }
             )
@@ -329,7 +359,8 @@ def main() -> int:
         "- File size: only `Content-Range */total` is authoritative for range responses.",
         "- Chunks: 8192-byte Range requests with retries.",
         "- Verification: byte signature + Pillow `verify()` + second `load()`.",
-        "- Format mismatch: WebP/JPEG/GIF to `.png` is re-encoded, never renamed.",
+        "- Target format: `.webp` (re-encoded, resized: hero ≤1600 px / ≤250 KB, other ≤1200 px / ≤150 KB, hard ≤300 KB) + `-480w/-800w/-1200w` variants for `srcset`.",
+        "- `.png` only with `keep_png: true` in the registry (pixel-exact logo / tiny UI icon); bytes are re-encoded, never renamed.",
         "",
         "## Per Asset",
         "",

@@ -117,6 +117,16 @@ def main() -> int:
     fact_bank_text = load_fact_bank(fact_bank_path)
     if not fact_bank_text:
         print(f"Warning: Fact-bank missing or empty at: {fact_bank_path}")
+    # The brief and site.inv are sources of truth too (company facts: years, guarantees, prices).
+    brief_text = ""
+    for extra in (root / "teya-memory/00-brief.md", root / "teya-memory/site.inv"):
+        if extra.is_file():
+            raw = extra.read_text(encoding="utf-8", errors="replace")
+            if extra.name == "site.inv":
+                raw = "\n".join(l for l in raw.splitlines()
+                                if not re.search(r"(pass|pwd|token|secret|key|login|user|credential|ftp|ssh|api)", l.split("=", 1)[0], re.I))
+            brief_text += "\n" + raw
+    fact_bank_text = (fact_bank_text + "\n" + brief_text).strip()
 
     report_items = verify_facts(extracted_facts, fact_bank_text)
 
@@ -124,18 +134,25 @@ def main() -> int:
     verified_facts = len([f for f in report_items if f["verified"]])
     unverified_facts = total_facts - verified_facts
 
-    # If fact bank exists, we expect at least some facts to match, or warn if there are unverified ones.
-    # We pass unless there's a strong contradiction (unverified critical large numbers/pricing).
-    # Since some general numbers are fine (e.g. 5 steps), we mark verdict as pass but list unverified details.
-    verdict = "pass"
-    if fact_bank_text and unverified_facts > 0:
-        # If there are unverified critical metrics (like prices or percentages), we warn
-        critical_unverified = [f for f in report_items if not f["verified"] and f["kind"] in ("price_or_currency", "percentage")]
-        if critical_unverified:
-            verdict = "warning"
+    # 0 extracted facts is NOT a pass: it means "nothing to verify" and is reported as no_claims.
+    # Unverified prices / percentages / years are a FAIL (they must be in fact-bank or brief, or removed).
+    # Other unverified numbers are a warning that the writer must review.
+    critical_kinds = ("price_or_currency", "percentage", "date_or_year")
+    critical_unverified = [f for f in report_items if not f["verified"] and f["kind"] in critical_kinds]
+    if not fact_bank_text:
+        verdict = "fail"
+    elif total_facts == 0:
+        verdict = "no_claims"
+    elif critical_unverified:
+        verdict = "fail"
+    elif unverified_facts > 0:
+        verdict = "warning"
+    else:
+        verdict = "pass"
 
     report = {
         "article": str(args.html.relative_to(root) if root in args.html.parents else args.html).replace("\\", "/"),
+        "sources_note": "fact-bank + 00-brief.md + site.inv (non-secret lines)",
         "fact_bank_source": str(fact_bank_path.relative_to(root) if root in fact_bank_path.parents else fact_bank_path).replace("\\", "/"),
         "verdict": verdict,
         "total_extracted_facts": total_facts,
@@ -155,7 +172,9 @@ def main() -> int:
     print(f"Unverified stats: {unverified_facts}")
     print(f"Report written to {output_path.relative_to(root) if root in output_path.parents else output_path}")
 
-    return 0 if verdict in ("pass", "warning") else 1
+    if verdict == "no_claims":
+        print("No numerical claims found: this is NOT a pass, just nothing to verify.")
+    return 0 if verdict in ("pass", "warning", "no_claims") else 1
 
 
 if __name__ == "__main__":
