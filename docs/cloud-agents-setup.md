@@ -42,7 +42,7 @@ cd /путь/к/репо-сайта && git add teya .cursor AGENTS.md .gitignore
 - `.cursor/rules/teya-*.mdc` — правила (оркестратор, ручные ключи без Ядрышко/Wordstat, WordPress по умолчанию);
 - `.cursor/skills/*`, `.cursor/agents/*`, `.cursor/commands/*` — skills, субагенты, команды `/teya-start`, `/teya-phase1`…;
 - блок `Cursor Cloud specific instructions (Teya)` в `AGENTS.md` (между маркерами, повторный запуск обновляет блок);
-- `.cursor/environment.json` (только если его не было): `pip install paramiko pillow` + подготовка `teya-memory/`.
+- `.cursor/environment.json` (только если его не было): `bash teya/scripts/teya_cloud_setup.sh` — Python-зависимости (paramiko, pillow, playwright), Chromium для Playwright и подготовка `teya-memory/`. Если `environment.json` уже был, скрипт inject печатает, что добавить в его `install`.
 
 Повторный запуск скрипта = обновление Teya в этом репо до текущего форка (rev пишется в `teya/.teya-fork-rev`).
 Если тот же репо открыт локально, где ещё стоит плагин — правила будут дублироваться; это не ломает, но лучше держать один источник.
@@ -55,6 +55,52 @@ cd /путь/к/репо-сайта && git add teya .cursor AGENTS.md .gitignore
 
 1. Запускать агента на репо сайта, в который уже сделан inject (или первым шагом попросить: «склонируй https://github.com/ez2582458-prog/teya-cursor-plugin в `teya/` и следуй `teya/rules/*.mdc` и `teya/agents/director.md`»).
 2. В промпте явно писать: «Работай по пайплайну Teya: начни с `.cursor/rules/teya-orchestrator.mdc` и `/teya-start`. `site.inv` заполняешь сам из данных ниже. Ядрышко/Wordstat не использовать, ключи — по `manual-keywords-url-map`. WordPress по умолчанию.» и прикладывать все данные брифа (домен, компания, ИНН, услуги, ключи, гео, доступы — через Secrets).
+
+## Облачное окружение: WordPress + Playwright (для проверок)
+
+Проверки Teya (`teya_visual_lint.py`, `teya_page_weight.py`, `teya_content_lint.py`, `teya_site_fact_check.py`) и release gate открывают сайт в настоящем браузере. В облаке для этого нужны **Playwright + Chromium**, а чтобы проверить тему **до деплоя** — **локальный WordPress**. Без них gate выходит с ошибкой (код 2 у скриптов = «не могу проверить» = FAIL), а не с PASS.
+
+### 1. `.cursor/environment.json` в репо сайта
+
+```json
+{
+  "install": "bash teya/scripts/teya_cloud_setup.sh || true"
+}
+```
+
+`teya_cloud_setup.sh` ставит `paramiko pillow playwright` (с обходом PEP 668), `python3 -m playwright install --with-deps chromium` (если есть sudo; иначе только Chromium) и проверяет, что Chromium запускается.
+
+### 2. Локальный WordPress в облаке (PHP + SQLite, без MySQL и Docker)
+
+Когда тема собрана в `teya-memory/wp/theme/<slug>/`:
+
+```bash
+bash teya/scripts/teya_cloud_setup.sh --no-python --wordpress --theme <slug>
+```
+
+Что делает (проверено 09.10.2026 на Debian 13, PHP 8.4, тема ek-servis):
+
+1. ставит `php-cli php-sqlite3 php-gd php-mbstring php-xml php-curl php-zip` через apt (нужен sudo — в облачных агентах Cursor он есть);
+2. качает WP-CLI и WordPress (ru_RU) в `/tmp/teya-wp/site`, подключает плагин `sqlite-database-integration` как `db.php` (база — файл SQLite, MySQL не нужен);
+3. `wp core install` с **одноразовым случайным** паролем администратора (`/tmp/teya-wp/.admin-pass`, в репо не попадает), ЧПУ `/%postname%/`, `home`/`siteurl` = `http://127.0.0.1:8080`;
+4. подключает тему симлинком из `teya-memory/wp/theme/<slug>`, копирует `teya-memory/wp/mu-plugins/*.php` (создание страниц/меню), активирует тему;
+5. запускает `php -S 127.0.0.1:8080` в фоне (лог `/tmp/teya-wp/server.log`, ошибки PHP — `wp-content/debug.log`, `WP_DEBUG` включён).
+
+Альтернатива, если в окружении есть Docker: образы `wordpress` + `mariadb` (или `wp-env`) — тогда передавай их URL в `--local-url`.
+
+### 3. Проверка и gate против локального сайта
+
+```bash
+python3 teya/scripts/teya_visual_lint.py   --url http://127.0.0.1:8080/ --project-root .
+python3 teya/scripts/teya_content_lint.py  --url http://127.0.0.1:8080/ --paths teya-memory/wp/theme/<slug> --project-root .
+python3 teya/scripts/teya_page_weight.py   --url http://127.0.0.1:8080/ --project-root .
+python3 teya/scripts/teya_site_fact_check.py --url http://127.0.0.1:8080/ --paths teya-memory/wp/theme/<slug> --project-root .
+python3 teya/scripts/teya_release_gate.py  --project-root . --local-url http://127.0.0.1:8080/
+```
+
+Результаты — `teya-memory/wp/qa/*.md|json` и `teya-memory/wp/release-gate-report.md`. Лимиты и смысл проверок — `teya/shared/site-quality-scripts.md`. Статическая копия сайта тоже подходит: `--url /путь/к/папке` (папка с `index.html`) или `file://…`.
+
+После деплоя тот же gate без `--local-url` проверяет живой `PUBLIC_SITE_URL` (HTTPS).
 
 ## Ветка `cloud-marketplace`
 

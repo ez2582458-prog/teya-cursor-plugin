@@ -19,6 +19,12 @@ description: "Проектирует и внедряет production-анимац
 - Performance: animировать `transform`/`opacity`, не `top/left/width/height`; динамически грузить тяжёлые библиотеки; ограничить DPR для Three.js; останавливать render loop вне viewport; тестировать mobile 375px.
 - Three.js: `WebGLRenderer`, `setSize`, capped `setPixelRatio(Math.min(devicePixelRatio, 1.5/2))`, `setAnimationLoop`, resize handling, dispose geometry/material/renderer/listeners.
 
+## Контент виден без JS (жёсткое правило)
+
+- Начальное скрытие для reveal/scroll-анимаций (opacity 0, translate, clip-path) задаётся **только** под классом, который ставит JS: в `<head>` `document.documentElement.classList.add('js')`, в CSS `.js .reveal{opacity:0}`. Без JS и при `prefers-reduced-motion: reduce` весь контент видим сразу.
+- Если GSAP/ScrollTrigger или chunk не загрузился — fallback снимает скрытие (`.js-motion-failed` / таймаут), контент не остаётся прозрачным.
+- После прокрутки страницы до низа ни один блок не должен остаться скрытым. Проверка: `python3 teya/scripts/teya_visual_lint.py --url <URL>` (`hidden_content`, `hidden_without_js`, `empty_band`) — FAIL = `MOTION BLOCKER`.
+
 ## Режимы
 
 ### `MOTION PLAN`

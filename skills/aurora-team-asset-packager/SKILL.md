@@ -27,7 +27,7 @@ python teya/scripts/package_mcp_assets.py --project-root <PROJECT_ROOT> --theme-
 - берёт полный размер **только** из `Content-Range`, а не из `Content-Length: 16` range-ответа;
 - качает 8192-byte Range chunks с retry;
 - проверяет byte signature + Pillow `verify()` + повторный `load()`;
-- пересохраняет WebP/JPEG/GIF в настоящий PNG, если целевой путь `.png`;
+- сохраняет картинки в **WebP** (целевой путь по умолчанию `assets/images/<id>.webp`; `.png/.jpg` в плане автоматически меняется на `.webp`), уменьшает до лимитов (hero ≤ 1600 px / ≤ 250 KB, остальные ≤ 1200 px / ≤ 150 KB, потолок 300 KB) и пишет варианты `-480w/-800w/-1200w.webp` + `srcset` в `media-map.json`; PNG только при `keep_png: true` в реестре (пиксельный логотип, мелкая UI-иконка), с перекодированием, а не переименованием;
 - пишет `asset-packaging-report.md`, theme `media-map.json`, fragment и обновляет `AURA_ASSET_REGISTRY.json`.
 
 Если скрипт вернул ненулевой код или `ASSET_PACKAGING_BLOCKER`, stage не готов. Не переписывать скрипт на лету, а чинить входные данные MCP/registry или сам `teya/scripts/package_mcp_assets.py` в plugin.

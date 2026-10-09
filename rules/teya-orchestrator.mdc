@@ -117,8 +117,9 @@ python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT> --keep-se
     - Пустой body, 404 theme CSS или недоступный `/wp-json/` = `PUBLIC URL DOES NOT SERVE DEPLOYED WP/THEME`, не "домен не прилинкован".
 17. **Task**(`aurora-team-report-compiler`) — собрать `site-spec.json`, `build-report.json`, `content-completeness-report.md` только из evidence.
 18. **Task**(`aurora-team-paint-evidence`) — собрать browser screenshots/network/computed styles в `paint-qa/`, включая animation evidence: no console errors, no missing GSAP/Three.js assets, reduced-motion branch reachable.
-19. **Hard Release Gate — readiness базового сайта:** **Task**(`aurora-team-release-gate`) выполняет `python teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>`.
-   - Если gate вернул ненулевой код, ставить `❌ RELEASE BLOCKER`, записать вывод в `teya-memory/wp/release-gate-report.md` и не запускать Design Guardian / QA.
+19. **Hard Release Gate — readiness базового сайта:** **Task**(`aurora-team-release-gate`) выполняет `python3 teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>` (live) или `… --local-url http://127.0.0.1:8080/` (локальный WordPress до деплоя). Gate сам запускает visual/content/page-weight/fact-check/image/favicon проверки и сам пишет `teya-memory/wp/release-gate-report.md`; `--no-live` без `--local-url` = FAIL.
+   - Если gate вернул ненулевой код, ставить `❌ RELEASE BLOCKER` и не запускать Design Guardian / QA. Отчёт gate не редактировать и не писать руками.
+   - После `✅ DESIGN OK` и `✅ QA OK` (оба с текущим `theme_hash`) — финальный `teya_release_gate.py --final`; без exit 0 не писать пользователю «готово».
 20. **Phase 1 blog publication/integration:** если Excalibur PASS и есть готовые `article.html`, `article.meta.json`, `article-qa.md PASS`, covers и schema, Директор запускает **Task**(`aurora`) mode `AURORA BLOG INTEGRATOR` в Phase 1. Интегратор публикует/встраивает Excalibur articles в homepage blog block, `/blog/`, `single.php` и WP posts/covers/schema по deploy context. После интеграции повторить deploy/media → report compiler → paint evidence → release gate. Если интеграция падает, записать `BLOG INTEGRATION BLOCKER/DEFERRED`; не поручать статьи Aurora.
 21. Если Excalibur Phase 1 deferred, Design Guardian/QA базового сайта можно продолжить только с явным handoff `EXCALIBUR PHASE1 DEFERRED`; blog section не должен содержать чужие article bodies.
 22. **Task**(`aurora-team-design-guardian`) — обязательный дизайн-gate: AURA match, source decomposition, per-page visual budget, per-page section blueprints, готовое browser paint evidence, screenshots 1440/375 по главной и каждой selected/build page, реальные screenshot files, browser network with theme CSS/JS/images/animation deps, no unstyled/default HTML paint, computed styles, token drift, visual coherence, visual inventory density, section transitions, motion map implementation, local asset files, MCP asset fidelity, responsive 375/768/1440, no visible top breadcrumbs, homepage blog section. Запускать только если нет `❌ CONTENT BLOCKER` и release gate прошёл. `EXCALIBUR DEFERRED` не блокирует дизайн-gate базового сайта.
@@ -139,6 +140,21 @@ python teya/scripts/reset_teya_memory.py --project-root <PROJECT_ROOT> --keep-se
 Если Task недоступен вообще:
 
 `❌ БЛОКЕР: среда не поддерживает Task/subagents.`
+
+### Правила честной проверки (обязательны, источник лимитов — `teya/shared/site-quality-scripts.md`)
+
+1. **Чужие вердикты не трогать.** Директор и любой агент не редактируют и не «уточняют» `design-integrity-report.md`, `seo-geo-verification.md`, `paint-qa/paint-evidence.json`, `release-gate-report.md` и fragments других агентов. Не согласен — перезапусти того агента с конкретным fix pack.
+2. **Не подменять paint-evidence и release gate.** Директор не пишет `paint-evidence.json` и не составляет вывод gate руками. `release-gate-report.md` пишет только `teya_release_gate.py`; вердикт gate считается из его собственных проверок и скриптов, а не из текстов агентов.
+3. **QA — только после `✅ DESIGN OK`**, выданного Design Guardian для текущего `theme_hash` (`python3 teya/scripts/teya_release_gate.py --project-root . --theme-hash`). Нет OK или хэш старый — QA не запускать.
+4. **После любого исправления — повторная проверка.** Правка темы меняет `theme_hash`: заново gate (`--local-url` или live), заново Design Guardian, потом QA. Старые OK после правок недействительны.
+5. **Design Guardian описывает каждый скриншот**: страница, ширина, что видно сверху вниз и что не так. Скриншот без описания не считается просмотренным; «скриншоты сделаны» ≠ «дизайн проверен».
+6. **Анимации не прячут контент без JS.** Начальное скрытие (opacity 0, translate) — только под классом, который ставит JS (`.js .reveal`), плюс `prefers-reduced-motion`. `teya_visual_lint.py` проверяет страницу без JS (`hidden_without_js`).
+7. **Стоковые/внешние фото** (если политика проекта их вообще разрешает) — только после того, как агент открыл картинку, посмотрел и описал, что на ней, и проверил, что это про услугу клиента. Непросмотренная картинка на сайт не идёт.
+8. **Тексты без служебной разметки**: никаких «Секция:», «H2:», «answer-block», «(40–60 слов)», `**`, `[текст](ссылка)`, TODO, «в разработке» и английских слов в русском тексте (`teya_content_lint.py`).
+9. **Основной текст ≥ 16 px**, мелкий служебный ≥ 12 px.
+10. **Заголовки без переноса внутри слова и с полями от края экрана** на 375/768/1440 (`heading_word_split`, `heading_edge`).
+11. **Факты по всему сайту** сверяются с брифом и fact-bank (`teya_site_fact_check.py`): годы, «с 20XX», «N лет», число объектов, лицензии/СРО. 0 найденных фактов — не PASS проверки фактов, а «0 фактов проверено».
+12. **Картинки** — WebP, hero ≤ 250 KB, остальные ≤ 150 KB, `srcset` + `width/height` + `loading="lazy"` (кроме hero). **Фавикон обязателен** (`teya_favicon.py`), без него gate = FAIL.
 
 ### Запреты
 

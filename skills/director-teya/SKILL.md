@@ -95,6 +95,21 @@ Aurora Team Lead и Aurora не запускают вложенные subagents.
 - `teya-memory/site.inv` — данные бизнеса, дизайна, контента и разрешения. **Пользователь не правит файл руками** — Директор заполняет из заполненного брифа в чате (`/teya-brief`, `rules/manual-keywords.mdc`). Поля `pages_count` / `pages_list` / `blog_articles_count` — из брифа.
 - `teya-memory/teya.env.local` — приватные доступы к WordPress, FTP/SFTP/SSH, SMTP, аналитике и webhook. Не коммитить.
 
+## Правила честной проверки (обязательны, источник лимитов — `teya/shared/site-quality-scripts.md`)
+
+1. **Чужие вердикты не трогать.** Директор и любой агент не редактируют и не «уточняют» `design-integrity-report.md`, `seo-geo-verification.md`, `paint-qa/paint-evidence.json`, `release-gate-report.md` и fragments других агентов. Не согласен — перезапусти того агента с конкретным fix pack.
+2. **Не подменять paint-evidence и release gate.** Директор не пишет `paint-evidence.json` и не составляет вывод gate руками. `release-gate-report.md` пишет только `teya_release_gate.py`; вердикт gate считается из его собственных проверок и скриптов, а не из текстов агентов.
+3. **QA — только после `✅ DESIGN OK`**, выданного Design Guardian для текущего `theme_hash` (`python3 teya/scripts/teya_release_gate.py --project-root . --theme-hash`). Нет OK или хэш старый — QA не запускать.
+4. **После любого исправления — повторная проверка.** Правка темы меняет `theme_hash`: заново gate (`--local-url` или live), заново Design Guardian, потом QA. Старые OK после правок недействительны.
+5. **Design Guardian описывает каждый скриншот**: страница, ширина, что видно сверху вниз и что не так. Скриншот без описания не считается просмотренным; «скриншоты сделаны» ≠ «дизайн проверен».
+6. **Анимации не прячут контент без JS.** Начальное скрытие (opacity 0, translate) — только под классом, который ставит JS (`.js .reveal`), плюс `prefers-reduced-motion`. `teya_visual_lint.py` проверяет страницу без JS (`hidden_without_js`).
+7. **Стоковые/внешние фото** (если политика проекта их вообще разрешает) — только после того, как агент открыл картинку, посмотрел и описал, что на ней, и проверил, что это про услугу клиента. Непросмотренная картинка на сайт не идёт.
+8. **Тексты без служебной разметки**: никаких «Секция:», «H2:», «answer-block», «(40–60 слов)», `**`, `[текст](ссылка)`, TODO, «в разработке» и английских слов в русском тексте (`teya_content_lint.py`).
+9. **Основной текст ≥ 16 px**, мелкий служебный ≥ 12 px.
+10. **Заголовки без переноса внутри слова и с полями от края экрана** на 375/768/1440 (`heading_word_split`, `heading_edge`).
+11. **Факты по всему сайту** сверяются с брифом и fact-bank (`teya_site_fact_check.py`): годы, «с 20XX», «N лет», число объектов, лицензии/СРО. 0 найденных фактов — не PASS проверки фактов, а «0 фактов проверено».
+12. **Картинки** — WebP, hero ≤ 250 KB, остальные ≤ 150 KB, `srcset` + `width/height` + `loading="lazy"` (кроме hero). **Фавикон обязателен** (`teya_favicon.py`), без него gate = FAIL.
+
 ## Skills
 
 - `teya-researcher` — обязательный pre-start research перед keywords/URL map и `aura-designer`.

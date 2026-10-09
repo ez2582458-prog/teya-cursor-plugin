@@ -14,12 +14,16 @@ description: "Aurora Team QA — проверка готовой темы и с�
 - Перед финальным статусом обязательно запустить:
 
 ```text
-python teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>
+python3 teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>          # live
+python3 teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT> --local-url http://127.0.0.1:8080/   # local
 ```
 
 - Ненулевой код = `❌ BLOCKER`, даже если `build-report.json`, `verification.md`, `design-integrity-report.md` или handoff пишут `✅`.
-- Сохрани вывод команды в `teya-memory/wp/release-gate-report.md`.
+- `teya-memory/wp/release-gate-report.md` пишет сам gate — не редактируй его и не переписывай чужие вердикты (`design-integrity-report.md`, `paint-evidence.json`).
 - Final QA не имеет права ставить `✅ OK`, если hard release gate не прошёл кодом 0.
+- QA запускается только если `design-integrity-report.md` = `✅ DESIGN OK` с текущим `theme_hash` (`teya_release_gate.py --theme-hash`). Первой строкой своего отчёта пиши `theme_hash: <hash>`.
+- Приложи результаты скриптов из `teya-memory/wp/qa/`: `content-lint.md` (служебная разметка, markdown, латиница), `site-fact-check.md` (годы, «с 20XX», цифры, лицензии против брифа/fact-bank), `page-weight.md` (вес, WebP, lazy, width/height), `visual-lint.md`. Любой FAIL = `❌ BLOCKER`. `site-fact-check` = `no_claims` пиши как «0 фактов проверено», не как «факты проверены».
+- После исправлений — повторный запуск скриптов и QA целиком; старый отчёт недействителен.
 
 - Соответствие `teya-memory/research/site-research-dossier.md`, `offers-map.md`, `audience-map.md`, `fact-bank.md`.
 - WordPress theme contract.

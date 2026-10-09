@@ -380,9 +380,12 @@ Targets:
 Required:
 
 - do not lazy-load the primary LCP image;
-- use explicit image dimensions and responsive `srcset`/`sizes` where possible;
-- prefer WebP/AVIF when assets are available;
-- lazy-load below-the-fold images;
+- explicit `width`/`height` on every `<img>` and responsive `srcset`/`sizes` (theme assets: `teya_img()` from `teya/shared/snippets/teya-responsive-image.php`; media library: `wp_get_attachment_image()`);
+- WebP only (PNG only for favicons / `keep_png`): hero ≤ 250 KB, other ≤ 150 KB, hard cap 300 KB; page weight home ≤ 1.5 MB, inner ≤ 1 MB, CSS ≤ 60 KB — run `teya_image_optimize.py --fix` and `teya_page_weight.py` (limits: `teya/shared/site-quality-scripts.md`);
+- lazy-load below-the-fold images (`loading="lazy"` is mandatory there);
+- body text ≥ 16px, any text ≥ 12px; headings never break inside a word (`overflow-wrap: normal; hyphens: manual`, `clamp()` sizes) and keep side padding from the viewport edge;
+- reveal/scroll animations never hide content without JS (`.js .reveal { opacity: 0 }`, class set by JS in `<head>`);
+- favicon set from `teya_favicon.py` wired via `inc/favicon.php` (or Site Icon);
 - use `font-display: swap`;
 - preload only critical fonts/assets;
 - defer non-critical JS;

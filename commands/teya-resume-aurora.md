@@ -11,7 +11,9 @@ description: Teya recovery — продолжить сборку Aurora без �
 Recovery не имеет права писать `published_and_configured`, `success`, `✅ DESIGN OK`, `✅ QA OK` или “готово”, пока не прошёл:
 
 ```text
-python teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>
+python3 teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>
+# или для локального WordPress до деплоя:
+python3 teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT> --local-url http://127.0.0.1:8080/
 ```
 
 Если команда вернула ненулевой код:

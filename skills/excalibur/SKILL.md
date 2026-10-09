@@ -85,7 +85,7 @@ Optional external reference (не заменяет Teya HTML contract):
 4. **Outline** — H2/H3 из темы + пробелы конкурентов из research.
 5. **Draft hook** — direct answer 350–500 символов (GEO).
 6. **Write body** — 5–8 секций, answer blocks 40–60 слов, рекомендации в каждой секции.
-7. **Fact-check** — `teya_excalibur_fact_checker.py` → `fact-check-report.json`.
+7. **Fact-check** — `teya_excalibur_fact_checker.py` → `fact-check-report.json` (сверка с fact-bank **и** `00-brief.md`/`site.inv`). `verdict: fail` (непроверенные цены / % / годы) — убрать цифру или внести источник в fact-bank, потом перезапустить. `no_claims` — цифр нет, это **не** «PASS проверки фактов», в отчёте писать «0 фактов проверено».
 8. **FAQ** — 5–7 пар, вопросы из queries/PAA.
 9. **CTA** — из conversion map, ≤ 3 упоминания.
 10. **Meta & A/B** — `article.meta.json` (с расширенной секцией `meta_ab` для SEO, CTR и AEO).

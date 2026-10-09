@@ -98,6 +98,8 @@ Visual gates: lint, diff, reviewer, qa
 9. Source decomposition gate — `teya/shared/design-source-decomposition-gate.md`
 10. Blog cover system — `teya/shared/blog-cover-mcp-contract.md`, `teya/shared/blog-cover-brand-concept.md`
 11. **Один общий шаблон внутренних страниц** — `teya/shared/shared-inner-page-template.md` (rule `shared-inner-page-template.mdc`): главная — уникальная; все типовые внутренние (услуги, гео, FAQ, цены, портфолио, о нас) — один шаблон `inner-shared` + общая библиотека блоков. Планируй N страниц как N контент-вариантов, а не N дизайнов. Уникальный макет внутренней — только по просьбе пользователя / лендинг / техническая причина с `unique_template_reason`.
+12. **Читаемость — не ниже лимитов** (`teya/shared/site-quality-scripts.md`): токен основного текста (`body`, абзацы, списки, тизеры) ≥ **16px** даже если в референсе мельче; служебный/подписи ≥ 12px; H1/H2 через `clamp()` так, чтобы самое длинное слово заголовка помещалось на 375px без переноса внутри слова и с полями от края экрана. Reveal/scroll-анимации в motion-плане — только с видимым контентом без JS (`.js .reveal`).
+13. **Фавикон и фирменный цвет:** в `AURADESIGN.md` укажи знак логотипа (файл) или инициалы и фирменный цвет для `teya_favicon.py`.
 
 ## Blog Cover Brand Concept (режим AURA)
 

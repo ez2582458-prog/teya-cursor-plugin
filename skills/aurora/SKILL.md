@@ -27,7 +27,10 @@ Aurora нельзя запускать как один большой “соб�
 
 ```text
 teya-memory/wp/theme-base-report.md
+teya-memory/wp/theme/<theme-slug>/assets/favicon/*  (+ inc/favicon.php)
 ```
+
+- **Фавикон (обязательный шаг THEME BASE):** `python3 teya/scripts/teya_favicon.py --theme teya-memory/wp/theme/<theme-slug> --logo <знак логотипа .svg/.png> --color "<фирменный #RRGGBB>" --name "<бренд>" --wire` (нет знака логотипа — `--initials "<1–3 буквы>"`). Результат: `assets/favicon/` (favicon.ico, favicon.svg, 32/180/192/512 PNG, site.webmanifest) + `inc/favicon.php`, подключённый в `functions.php`; если в WP задан Site Icon (`site_icon`), он имеет приоритет. Проверка: `teya_favicon.py --theme … --check --url <URL>`. Нет фавикона — release gate FAIL.
 
 ### `AURORA PAGE BUILDER`
 
@@ -162,6 +165,12 @@ Aurora не имеет права писать substitute article bodies. Есл
 - В `site-spec.json`, `build-report.json`, `content-completeness-report.md` записать visual data fields: `visual_inventory_status`, `required_visual_zones_count`, `ready_visual_zones_count`, `meaningful_image_count`, `minimum_meaningful_image_assets_homepage`, `meaningful_image_gap`, `section_transitions_status`, `asset_registry_status`, `paint_evidence_status`, `visual_budget_status`, `section_blueprints_status`, `style_match_scorecard_status`, `per_page_visual_budget_status`, `per_page_section_blueprints_status`, `per_page_meaningful_image_counts`, `per_page_visual_gaps`, `local_asset_files_status`, `missing_local_asset_files`, `browser_subresources_status`, `unstyled_live_paint_status`, `wp_media_map_status`, `wp_media_import_status`, `missing_wp_media_attachments`, `theme_slug`, `project/site_name`, `public_site_url`.
 - Создать `content-completeness-report.md` и не публиковать страницы с `❌ CONTENT BLOCKER`.
 - Не выдумывать цены, рейтинги, отзывы, адреса, авторов или legal data.
+- Картинки темы — WebP в лимитах `teya/shared/site-quality-scripts.md`; каждая `<img>` с `width`/`height`, `srcset`/`sizes` (хелпер `teya/shared/snippets/teya-responsive-image.php` → `teya_img()`, для медиатеки — `wp_get_attachment_image()`), `loading="lazy"` ниже первого экрана, hero — `fetchpriority="high"` без lazy. Перед сдачей: `python3 teya/scripts/teya_image_optimize.py --theme teya-memory/wp/theme/<theme-slug> --fix`.
+- Основной текст ≥ 16 px (body, абзацы, списки, тизеры блога), мелкий служебный ≥ 12 px. Заголовки: `overflow-wrap: normal; hyphens: manual` (без переноса внутри слова), `clamp()` для размера, поля от края экрана (`padding-inline` контейнера ≥ 16 px на 375).
+- Анимации появления не прячут контент без JS: начальное скрытие только под классом, который ставит JS (`document.documentElement.classList.add('js')` → `.js .reveal{opacity:0}`), плюс `prefers-reduced-motion`.
+- Тексты на сайте — без служебных пометок брифа/контент-пака («Секция:», «H2:», «answer-block», «(40–60 слов)»), без markdown (`**`, `[текст](ссылка)` → настоящие `<a href>`), без английских слов в русском тексте.
+- Факты (годы, «с 20XX», «N лет», число объектов, лицензии/СРО) — только из брифа/fact-bank, в том числе в SVG-печатях, alt и JSON-LD.
+- Перед сдачей прогони локально: `teya_visual_lint.py`, `teya_content_lint.py`, `teya_page_weight.py`, `teya_site_fact_check.py` (`--url http://127.0.0.1:8080/`). Свои отчёты со статусом OK при FAIL скриптов писать запрещено.
 
 ## Блог
 

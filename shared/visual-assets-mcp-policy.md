@@ -127,10 +127,10 @@ teya-memory/design/AURA_SECTION_TRANSITIONS.json
 После Aurora build каждый required visual asset должен существовать как локальный файл внутри темы:
 
 ```text
-teya-memory/wp/theme/<theme-slug>/assets/images/<asset>.png
+teya-memory/wp/theme/<theme-slug>/assets/images/<asset>.webp
 ```
 
-или как другой явный файл внутри theme package (`.svg`, `.webp`, `.jpg`), если это указано в registry. Одного remote URL, live URL или tempfile URL недостаточно.
+(+ варианты `<asset>-480w.webp`, `-800w.webp`, `-1200w.webp` для `srcset`) или `.svg` для векторных. Растровые картинки — **WebP** в лимитах `teya/shared/site-quality-scripts.md` (hero ≤ 250 KB, остальные ≤ 150 KB, потолок 300 KB); `.png` — только фавиконы и ассеты с `keep_png: true` в registry. Одного remote URL, live URL или tempfile URL недостаточно.
 
 Aurora обязана:
 
@@ -142,7 +142,8 @@ Aurora обязана:
 - проверить `file_exists` для каждого path из `inc/assets.php` / `AURA_ASSET_REGISTRY.json`;
 - проверить каждый raster asset по bytes, а не по словам MCP: PNG начинается с `89 50 4E 47 0D 0A 1A 0A`, WebP начинается с `RIFF....WEBP`, JPEG с `FF D8 FF`. `content-type: image/png` и URL `.png` не являются доказательством PNG.
 - выполнить decode verification (`PIL.Image.open(...).verify()` и повторный `load()`) для каждого PNG/JPEG/WebP/GIF. Если decoder падает или GET тела таймаутит/обрывается — это `ASSET_BINARY_BLOCKER`, не ready.
-- если MCP/Recraft возвращает `.png` URL, но byte signature WebP, агент обязан либо пересохранить настоящий PNG после успешного декодирования, либо сохранить `.webp` с честным расширением и обновить maps/templates. Просто переименовывать WebP в `.png` запрещено.
+- если MCP/Recraft возвращает `.png` URL, но byte signature WebP, агент перекодирует картинку в `.webp` с честным расширением (это делают `package_mcp_assets.py` / `asset_transport.py` / `teya_image_optimize.py`) и обновляет maps/templates. Просто переименовывать файлы между форматами запрещено.
+- **Стоковые / внешние / найденные фото** (только если политика проекта их разрешает) — агент обязан открыть каждую картинку, посмотреть и письменно описать, что на ней (объект, сюжет, качество, водяные знаки, текст на картинке) и почему она подходит к услуге клиента. Описание пишется в `AURA_ASSET_REGISTRY.json` (`visual_description`) и отчёт. Непросмотренная/неописанная картинка на сайт не идёт.
 - включить эти файлы в zip/package/deploy;
 - записать `local_asset_files_status` и `missing_local_asset_files` в `site-spec.json`, `build-report.json`, `content-completeness-report.md`.
 

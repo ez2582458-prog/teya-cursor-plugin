@@ -10,6 +10,13 @@ DOM, HTML, CSS-файл, `site-spec.json`, `build-report.json` и утвержд
 
 `paint-evidence.json` со словом `pass` тоже не является доказательством сам по себе. PASS действителен только если все screenshot-файлы реально существуют в `teya-memory/wp/paint-qa/`, browser network показывает загрузку CSS/JS/images, а screenshot/computed styles подтверждают применённый дизайн.
 
+## Скриптовые проверки (обязательны, лимиты — `teya/shared/site-quality-scripts.md`)
+
+- Скриншоты снимаются **с прокруткой страницы до низа** (иначе scroll-анимации не срабатывают и секции пустые): `python3 teya/scripts/teya_visual_lint.py --url <URL> --project-root .` → `teya-memory/wp/qa/visual-lint-screens/`, проверки 1440/768/375 и без JS.
+- Design Guardian **описывает каждый скриншот** словами (страница, ширина, что видно, что не так) в `design-integrity-report.md` → раздел `## Описание скриншотов`. Без описаний — не `✅ DESIGN OK`.
+- Release gate (`teya_release_gate.py`) перезапускает эти проверки сам и не верит `pass` из `paint-evidence.json`.
+- После каждого исправления темы скриншоты и проверки снимаются заново (новый `theme_hash`).
+
 ## Обязательные Evidence
 
 Если есть public URL, Design Guardian обязан создать:

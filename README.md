@@ -56,8 +56,14 @@ Brief -> Research -> manual keywords/URL map || AURA -> Aurora Team -> Aurora sp
 
 For a built project, run:
 
-```powershell
-python teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>
+```bash
+python3 teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT>                                   # live PUBLIC_SITE_URL
+python3 teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT> --local-url http://127.0.0.1:8080/  # local WordPress / preview
+python3 teya/scripts/teya_release_gate.py --project-root <PROJECT_ROOT> --final                            # + fresh DESIGN OK / QA OK
 ```
 
-The gate must pass before any run can be considered production-ready.
+The gate must pass before any run can be considered production-ready. It runs the browser checks itself
+(`teya_visual_lint.py`, `teya_content_lint.py`, `teya_page_weight.py`, `teya_site_fact_check.py`,
+`teya_image_optimize.py --check`, `teya_favicon.py --check`), needs Playwright + Chromium
+(`scripts/teya_cloud_setup.sh`), and writes `teya-memory/wp/release-gate-report.md` itself.
+Limits and rules: `shared/site-quality-scripts.md`. Cloud setup with a local WordPress: `docs/cloud-agents-setup.md`.

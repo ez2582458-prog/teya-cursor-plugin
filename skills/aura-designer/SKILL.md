@@ -131,7 +131,7 @@ Blog covers: **сначала концепт** (`blog-cover-brand-concept.md` + 
 
 `AURADESIGN.md` должен иметь:
 
-- YAML frontmatter с токенами: colors, typography, spacing, rounded, borders, shadows/elevation, components, motion, assets;
+- YAML frontmatter с токенами: colors, typography, spacing, rounded, borders, shadows/elevation, components, motion, assets; `typography.body.fontSize` ≥ **16px** (мельче нельзя, даже если в референсе 14–15px), подписи ≥ 12px, заголовки через `clamp()` без переноса внутри слова на 375px; `favicon: {logo_mark: <path> | initials: "<1–3 буквы>", color: "#RRGGBB"}` для `teya_favicon.py`;
 - markdown body: source replication doctrine, composition lock, philosophy/vibe, color guidance, typography hierarchy, layout/grid, component states, motion, responsive behavior, accessibility, do/don't, QA checklist, AI prompt integration;
 - запрет на generic AI slop;
 - правила assets через MCP KV;

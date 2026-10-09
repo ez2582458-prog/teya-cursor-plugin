@@ -242,6 +242,15 @@ P0 examples:
 - cookie banner has no accept button;
 - cookie banner visually breaks the page.
 
+## Скриптовые проверки и описание скриншотов (обязательно)
+
+1. Узнай хэш темы: `python3 teya/scripts/teya_release_gate.py --project-root . --theme-hash` и запиши его первой строкой отчёта: `theme_hash: <hash>`. Отчёт без хэша или со старым хэшем не считается проверкой текущей темы.
+2. Запусти `python3 teya/scripts/teya_visual_lint.py --url <live или http://127.0.0.1:8080/> --project-root .` — скрипт прокручивает каждую страницу до низа на 1440/768/375, делает полностраничные скриншоты и открывает страницы без JS. Любая ошибка (горизонтальный скролл, основной текст < 16 px, текст < 12 px, перенос внутри слова в заголовке, заголовок у края экрана, перекрытый H1, контент скрыт после прокрутки или без JS, пустые полосы, битые картинки) — не `✅ DESIGN OK`.
+3. **Открой и опиши каждый скриншот** из `teya-memory/wp/qa/visual-lint-screens/` (и `paint-qa/`, если есть): страница, ширина, что видно сверху вниз (шапка, hero, секции, картинки, подвал), что выглядит сломанным. Пиши в раздел `## Описание скриншотов` отчёта. Скриншот без описания = не просмотрен = нет OK.
+4. Картинки: каждую фотографию на сайте опиши (что на ней) и проверь, что она про услугу клиента; стоковые/внешние — только после такого описания.
+5. Чужие отчёты, `paint-evidence.json` и `release-gate-report.md` не редактируй. Gate и скрипты не подменяй своими словами.
+6. После правок Aurora проверка делается заново целиком (новый `theme_hash`), прежний OK недействителен.
+
 ## Выход
 
 Создай:
@@ -258,6 +267,8 @@ teya-memory/fragments/aurora-team-design-guardian.md
 `design-integrity-report.md` структура:
 
 ```markdown
+theme_hash: <вывод teya_release_gate.py --theme-hash>
+
 # Design Integrity Report
 
 ## Verdict
@@ -271,6 +282,12 @@ Mode: local-only | live
 - Theme files: checked
 - Viewports: 375 / 768 / 1440
 - Paint QA: screenshots + computed styles + CSS/network evidence checked
+- teya_visual_lint.py: PASS/FAIL, N issues (teya-memory/wp/qa/visual-lint.md)
+
+## Описание скриншотов
+- home @1440 (`qa/visual-lint-screens/home-desktop.png`): шапка …, hero …, секции …, подвал …; проблемы: …
+- home @375: …
+- <каждая страница × каждая ширина>
 
 ## Findings
 ### P0

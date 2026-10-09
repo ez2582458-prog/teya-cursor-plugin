@@ -14,14 +14,16 @@ description: "Собирает browser paint evidence: screenshots 1440/375, net
 - Открыть public URL с cache-bust.
 - Проверить HTTPS и отсутствие Beget/domain stub.
 - Записать raw live evidence: HTTP status, HTTPS status, final URL, body length, `<title>`, theme CSS status, `/wp-json/` status, theme slug present in HTML.
-- Снять screenshots 1440/375 для home и каждой selected/build page.
+- Снять screenshots 1440/375 для home и каждой selected/build page **скриптом**, с прокруткой до низа (иначе scroll-анимации не срабатывают и секции на скриншоте пустые): `python3 teya/scripts/teya_visual_lint.py --url <URL> --project-root .` → `teya-memory/wp/qa/visual-lint-screens/` + `visual-lint.json`. Пути этих файлов записать в `paint-evidence.json`. Скриншоты, снятые без прокрутки, не принимаются.
+- Вес и картинки: `python3 teya/scripts/teya_page_weight.py --url <URL> --project-root .` → `teya-memory/wp/qa/page-weight.md`.
 - Собрать network evidence: theme CSS, theme JS, images, fonts, 4xx/5xx.
 - Если `main.js` содержит dynamic imports (`import('./motion/...')`), проверить каждый imported chunk: URL должен быть в network или HTTP probe со статусом 200. Missing `motion-home.js`/`motion-lite.js` = blocker.
 - Для motion evidence проверить console warnings/errors; `motion-home unavailable`, failed dynamic import, missing GSAP/Three.js chunk, module 404 = blocker.
 - Если `animation-implementation-report.md` заявляет GSAP/Three.js, browser evidence должен подтвердить reachable bundles and no module load errors.
 - Проверить broken images и alt text.
 - Снять базовые computed styles: body font, H1 font, hero background, CTA color.
-- Записать `paint-evidence.json` строго по `visual-paint-qa-gate.md`.
+- Записать `paint-evidence.json` строго по `visual-paint-qa-gate.md`. Поле `verdict` = `fail`, если `teya_visual_lint.py` или `teya_page_weight.py` вернули FAIL; `pass` в этом файле release gate **не** считает доказательством — он перепроверяет сам.
+- Работает и до деплоя: на локальном WordPress (`http://127.0.0.1:8080/`, см. `docs/cloud-agents-setup.md`).
 
 ## Blockers
 

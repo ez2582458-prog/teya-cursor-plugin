@@ -391,9 +391,13 @@ public_site_url
 Реализуй по `teya-memory/wp/performance-accessibility-map.md`:
 
 - LCP image eager/fetchpriority;
-- below-fold images lazy;
-- width/height for images;
-- WebP/AVIF where available;
+- below-fold images `loading="lazy"` (обязательно, проверяет `teya_page_weight.py`);
+- `width`/`height` у каждой `<img>` (обязательно);
+- `srcset` + `sizes` из вариантов `-480w/-800w/-1200w.webp` (`teya_img()` из `teya/shared/snippets/teya-responsive-image.php` или `wp_get_attachment_image()`);
+- **только WebP** (PNG — фавиконы и `keep_png`), hero ≤ 250 KB, остальные ≤ 150 KB, потолок 300 KB; вес главной ≤ 1,5 MB, внутренней ≤ 1 MB; `python3 teya/scripts/teya_image_optimize.py --theme … --fix` перед сдачей;
+- основной текст ≥ 16 px; заголовки без переноса внутри слова и с полями от края экрана;
+- reveal-анимации не прячут контент без JS (`.js .reveal`);
+- обязательный фавикон: `teya_favicon.py` (см. `teya/shared/site-quality-scripts.md`);
 - defer non-critical JS;
 - `font-display: swap`;
 - visible focus states, skip link, labels, contrast, touch targets;
